@@ -58,8 +58,8 @@
     "typecheck": "tsc -p ./tsconfig.json --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@kubb/plugin-ts": "workspace:*",
-    "@kubb/plugin-zod": "workspace:*"
+    "@kubb/plugin-ts": "workspace:^",
+    "@kubb/plugin-zod": "workspace:^"
   },
   "devDependencies": {
     "@internals/client": "workspace:*",

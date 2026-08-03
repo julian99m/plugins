@@ -70,8 +70,8 @@
     "typecheck": "tsc -p ./tsconfig.json --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@kubb/plugin-faker": "workspace:*",
-    "@kubb/plugin-ts": "workspace:*"
+    "@kubb/plugin-faker": "workspace:^",
+    "@kubb/plugin-ts": "workspace:^"
   },
   "devDependencies": {
     "@internals/shared": "workspace:*",
