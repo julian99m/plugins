@@ -7,16 +7,16 @@ settings:
 catalogs:
   default:
     '@kubb/adapter-oas':
-      specifier: 5.0.0-beta.104
+      specifier: ^5.0.0-beta.104
       version: 5.0.0-beta.104
     '@kubb/core':
-      specifier: 5.0.0-beta.104
+      specifier: ^5.0.0-beta.104
       version: 5.0.0-beta.104
     '@kubb/parser-ts':
-      specifier: 5.0.0-beta.104
+      specifier: ^5.0.0-beta.104
       version: 5.0.0-beta.104
     '@kubb/plugin-barrel':
-      specifier: 5.0.0-beta.104
+      specifier: ^5.0.0-beta.104
       version: 5.0.0-beta.104
     '@types/node':
       specifier: ^22.20.1
@@ -31,7 +31,7 @@ catalogs:
       specifier: ^4.1.10
       version: 4.1.10
     kubb:
-      specifier: 5.0.0-beta.104
+      specifier: ^5.0.0-beta.104
       version: 5.0.0-beta.104
     oxfmt:
       specifier: ^0.59.0
@@ -636,10 +636,10 @@ importers:
   packages/plugin-axios:
     dependencies:
       '@kubb/plugin-ts':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-ts
       '@kubb/plugin-zod':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-zod
     devDependencies:
       '@internals/client':
@@ -661,7 +661,7 @@ importers:
   packages/plugin-cypress:
     dependencies:
       '@kubb/plugin-ts':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-ts
     devDependencies:
       '@internals/shared':
@@ -677,7 +677,7 @@ importers:
   packages/plugin-faker:
     dependencies:
       '@kubb/plugin-ts':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-ts
     devDependencies:
       '@internals/shared':
@@ -693,10 +693,10 @@ importers:
   packages/plugin-fetch:
     dependencies:
       '@kubb/plugin-ts':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-ts
       '@kubb/plugin-zod':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-zod
     devDependencies:
       '@internals/client':
@@ -715,10 +715,10 @@ importers:
   packages/plugin-mcp:
     dependencies:
       '@kubb/plugin-ts':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-ts
       '@kubb/plugin-zod':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-zod
     devDependencies:
       '@internals/client':
@@ -737,10 +737,10 @@ importers:
   packages/plugin-msw:
     dependencies:
       '@kubb/plugin-faker':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-faker
       '@kubb/plugin-ts':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-ts
     devDependencies:
       '@internals/shared':
@@ -756,7 +756,7 @@ importers:
   packages/plugin-react-query:
     dependencies:
       '@kubb/plugin-ts':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-ts
     devDependencies:
       '@internals/client':
@@ -788,7 +788,7 @@ importers:
   packages/plugin-swr:
     dependencies:
       '@kubb/plugin-ts':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-ts
     devDependencies:
       '@internals/client':
@@ -829,7 +829,7 @@ importers:
   packages/plugin-vue-query:
     dependencies:
       '@kubb/plugin-ts':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-ts
     devDependencies:
       '@internals/client':
