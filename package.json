@@ -54,7 +54,7 @@
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "prettier": "catalog:",
-    "taze": "^19.16.0",
+    "taze": "^20.0.0",
     "tsdown": "catalog:",
     "turbo": "2.10.0",
     "typescript": "catalog:",
