@@ -426,14 +426,14 @@ describe('resolveDependencyOperationFile', () => {
   function createTestCache(): NodeCache {
     const store = new Map<string, unknown>()
     return {
-      getItem<TValue>(key: string) {
+      readItem<TValue>(key: string) {
         return store.get(key) as TValue | undefined
       },
-      setItem<TValue>(key: string, value: TValue) {
+      writeItem<TValue>(key: string, value: TValue) {
         store.set(key, value)
         return value
       },
-      getOrSet<TValue>(key: string, factory: () => TValue) {
+      ensureItem<TValue>(key: string, factory: () => TValue) {
         if (store.has(key)) return store.get(key) as TValue
         const value = factory()
         store.set(key, value)

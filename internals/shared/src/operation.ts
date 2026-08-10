@@ -42,7 +42,7 @@ export function resolveDependencyOperationFile(options: {
 }): ast.FileNode {
   const { cache, node, resolver, root, output, group } = options
 
-  return cache.getOrSet(`${resolver.pluginName}:operationFile`, () =>
+  return cache.ensureItem(`${resolver.pluginName}:operationFile`, () =>
     resolver.file({ ...operationFileEntry(node, node.operationId), root, output, group: group ?? undefined }),
   )
 }

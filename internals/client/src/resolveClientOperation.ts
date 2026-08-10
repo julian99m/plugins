@@ -35,7 +35,7 @@ export function resolveClientOperation(options: {
   const { clientPlugin, driver, node, root, output, cache } = options
   if (!clientPlugin) return null
 
-  return cache.getOrSet(`${clientPlugin.pluginName}:clientOperation`, () => {
+  return cache.ensureItem(`${clientPlugin.pluginName}:clientOperation`, () => {
     const resolver = driver.getResolver(clientPlugin.pluginName)
     const plugin = driver.getPlugin(clientPlugin.pluginName)
     const file = resolver.file({
