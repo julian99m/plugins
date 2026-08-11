@@ -145,8 +145,9 @@ export type BuildOperationCommentsOptions = {
   link?: OperationCommentLink
   linkPosition?: 'beforeDeprecated' | 'afterDeprecated'
   splitLines?: boolean
-  // Not imported from `@internals/utils`: this package keeps `@internals/*` external, so the
-  // import would survive into the published `.d.ts`, where most plugins cannot resolve it.
+  // Spelled out rather than imported from `@internals/utils`. This package is bundled into the
+  // client and query plugins, where a cross-package type edge leaves an import their `.d.ts`
+  // cannot resolve and sends their dts build time through the roof.
   /**
    * How much of each description to keep. Mirrors the `comments` option on the plugin that owns
    * the generated file.

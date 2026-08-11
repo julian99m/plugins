@@ -41,7 +41,7 @@ export function buildJSDoc(
 }
 
 /**
- * How much of the OpenAPI prose is carried into a generated comment block.
+ * How much of each OpenAPI description reaches a generated comment block.
  */
 export type CommentLevel = 'full' | 'brief' | 'none'
 

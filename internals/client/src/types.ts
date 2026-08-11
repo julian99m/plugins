@@ -11,6 +11,9 @@ import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions
  */
 export type ValidatorOptions = false | 'zod' | { request?: 'zod'; response?: 'zod' }
 
+// Spelled out rather than imported from `@internals/utils`. This package is bundled into the
+// client and query plugins, where a cross-package type edge leaves an import their `.d.ts` cannot
+// resolve and sends their dts build time through the roof.
 /**
  * How much of each OpenAPI description reaches the JSDoc above a generated operation.
  */
