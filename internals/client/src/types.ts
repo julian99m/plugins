@@ -1,4 +1,3 @@
-import type { CommentLevel } from '@internals/utils'
 import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
 
 /**
@@ -11,6 +10,11 @@ import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions
  *   on the non-throw path, the error body.
  */
 export type ValidatorOptions = false | 'zod' | { request?: 'zod'; response?: 'zod' }
+
+/**
+ * How much of each OpenAPI description reaches the JSDoc above a generated operation.
+ */
+export type CommentLevel = 'full' | 'brief' | 'none'
 
 /**
  * How the class-based SDK groups operations.

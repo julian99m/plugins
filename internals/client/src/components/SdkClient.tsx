@@ -1,4 +1,4 @@
-import type { CommentLevel } from '@internals/utils'
+import type { CommentLevel } from '../types.ts'
 import type { ast } from 'kubb/kit'
 import type { ResolverTs } from '@kubb/plugin-ts'
 import type { ResolverZod } from '@kubb/plugin-zod'

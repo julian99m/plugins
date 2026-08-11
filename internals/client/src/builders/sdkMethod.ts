@@ -1,5 +1,6 @@
 import { buildOperationComments } from '@internals/shared'
-import { buildJSDoc, type CommentLevel } from '@internals/utils'
+import { buildJSDoc } from '@internals/utils'
+import type { CommentLevel } from '../types.ts'
 import { ast } from 'kubb/kit'
 import type { ResolverTs } from '@kubb/plugin-ts'
 import type { ResolverZod } from '@kubb/plugin-zod'
