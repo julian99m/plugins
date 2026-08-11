@@ -39,7 +39,7 @@ type Props = {
    */
   security?: Array<Auth>
   /**
-   * How much of the OpenAPI prose reaches the JSDoc above the generated function.
+   * How much of each OpenAPI description reaches the JSDoc above the generated function.
    */
   comments?: CommentLevel
   isExportable?: boolean

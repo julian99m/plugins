@@ -63,7 +63,7 @@ export type PrinterTsOptions = {
    */
   syntaxType?: PluginTs['resolvedOptions']['syntaxType']
   /**
-   * How much of the OpenAPI prose reaches the JSDoc above generated types.
+   * How much of each OpenAPI description reaches the JSDoc above generated types.
    *
    * @default `'brief'`
    */

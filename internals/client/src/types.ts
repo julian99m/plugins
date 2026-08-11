@@ -75,10 +75,10 @@ export type Options = OutputOptions & {
    */
   validator?: ValidatorOptions
   /**
-   * How much of the OpenAPI prose is carried into the JSDoc above each generated operation.
-   * - `'brief'` — `@description` is cut to its first sentence. Every other tag is kept.
-   * - `'full'` — every description in full, however many paragraphs the spec carries.
-   * - `'none'` — no JSDoc at all. The generated-by file banner still appears.
+   * How much of each OpenAPI description reaches the JSDoc above each generated operation.
+   * - `'brief'` — cut to the first sentence. Every other tag is kept.
+   * - `'full'` — the whole description, however many paragraphs the spec carries.
+   * - `'none'` — no JSDoc. The generated-by banner still appears.
    *
    * @default 'brief'
    */

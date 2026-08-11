@@ -45,20 +45,14 @@ export function buildJSDoc(
  */
 export type CommentLevel = 'full' | 'brief' | 'none'
 
-/**
- * Longest `@description` a `'brief'` comment keeps, in characters. Descriptions that run past it
- * are cut at the last word and closed with an ellipsis.
- */
 const BRIEF_MAX_LENGTH = 120
 
 const DESCRIPTION_TAG = '@description '
 
 /**
- * Trims a comment list down to the requested level.
- *
- * `'brief'` keeps every tag and shortens only `@description`, so a generated member stays
- * documented without carrying a whole paragraph of spec prose. Specs routinely put several
- * paragraphs in one description, and the first sentence is the part that helps at a call site.
+ * Trims a comment list down to the requested level. `'brief'` keeps every tag and shortens only
+ * `@description`, since specs routinely put several paragraphs there and the first sentence is
+ * the part that helps at a call site.
  */
 export function applyCommentLevel(comments: Array<string>, level: CommentLevel): Array<string> {
   if (level === 'none') return []
@@ -71,17 +65,10 @@ export function applyCommentLevel(comments: Array<string>, level: CommentLevel):
   })
 }
 
-/**
- * Abbreviations whose trailing period does not end a sentence. Without these, a description like
- * "The role of the message (e.g. `system`)" would be cut to "The role of the message (e.g." —
- * losing the content and leaving a bracket open.
- */
+// Without these, "The role of the message (e.g. `system`)" gets cut to "The role of the
+// message (e.g.", losing the content and leaving a bracket open.
 const ABBREVIATIONS = new Set(['e.g.', 'i.e.', 'etc.', 'vs.', 'cf.', 'approx.', 'inc.', 'no.', 'dr.', 'mr.', 'mrs.', 'ms.', 'st.', 'fig.', 'al.'])
 
-/**
- * Reduces `text` to its opening sentence, falling back to a hard character cap when that sentence
- * is itself too long to be a summary.
- */
 function toFirstSentence(text: string): string {
   const firstSentence = findFirstSentence(text) ?? text
 
@@ -93,10 +80,6 @@ function toFirstSentence(text: string): string {
   return `${(lastSpace > 0 ? capped.slice(0, lastSpace) : capped).trimEnd()}…`
 }
 
-/**
- * Finds the opening sentence, skipping periods that only look like sentence ends. Returns `null`
- * when the text carries no usable sentence break before the cap.
- */
 function findFirstSentence(text: string): string | null {
   const pattern = /\.(\s|$)/g
 
@@ -110,21 +93,11 @@ function findFirstSentence(text: string): string | null {
   return null
 }
 
-/**
- * Tells whether the trailing period of `head` closes a sentence rather than an abbreviation, and
- * that cutting there would not strand an open bracket.
- */
 function endsSentence(head: string): boolean {
   const lastWord = head.split(/\s/).pop() ?? ''
   if (ABBREVIATIONS.has(lastWord.replace(/^[^\w]+/, '').toLowerCase())) return false
 
-  let depth = 0
-  for (const char of head) {
-    if (char === '(') depth += 1
-    if (char === ')') depth -= 1
-  }
-
-  return depth <= 0
+  return head.split('(').length <= head.split(')').length
 }
 
 /**

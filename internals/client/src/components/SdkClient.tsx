@@ -23,7 +23,7 @@ type Props = {
   operations: Array<OperationData>
   validator: ValidatorOptions | undefined
   /**
-   * How much of the OpenAPI prose reaches the JSDoc above each generated method.
+   * How much of each OpenAPI description reaches the JSDoc above each generated method.
    */
   comments?: CommentLevel
   children?: KubbReactNode

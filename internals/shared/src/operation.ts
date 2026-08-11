@@ -146,7 +146,7 @@ export type BuildOperationCommentsOptions = {
   linkPosition?: 'beforeDeprecated' | 'afterDeprecated'
   splitLines?: boolean
   /**
-   * How much of the OpenAPI prose to keep. Mirrors the `comments` option on the plugin that owns
+   * How much of each description to keep. Mirrors the `comments` option on the plugin that owns
    * the generated file.
    */
   level?: CommentLevel
