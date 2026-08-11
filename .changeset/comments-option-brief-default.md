@@ -8,7 +8,7 @@ Generated JSDoc now keeps only the first sentence of each OpenAPI `description`.
 
 The new `comments` option takes three values:
 
-- `'brief'` (default) shortens `@description` to its opening sentence, capped at 120 characters. Every other tag is kept, so every type stays documented. Abbreviations like `e.g.` and open brackets do not end a sentence.
+- `'brief'` (default) shortens `@description` to its opening sentence. Every other tag is kept, so every type stays documented. Abbreviations like `e.g.` and open brackets do not end a sentence. A description that runs on for 150 characters without one is cut at the last word before 120, never mid-link or mid-word.
 - `'full'` emits every description in full, however many paragraphs the spec carries.
 - `'none'` emits no JSDoc at all. The generated-by file banner is unaffected.
 
@@ -16,4 +16,4 @@ The new `comments` option takes three values:
 pluginTs({ comments: 'full' })
 ```
 
-On the OpenAI spec (281 operations) the default trims 199 KB and `'none'` trims 1.03 MB of a 2.76 MB output.
+On the OpenAI spec (281 operations) the default trims 197 KB and `'none'` trims 1.03 MB of a 2.76 MB output.

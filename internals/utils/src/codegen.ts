@@ -45,7 +45,10 @@ export function buildJSDoc(
  */
 export type CommentLevel = 'full' | 'brief' | 'none'
 
+// A whole sentence is worth a few characters over the cap, so the sentence limit sits above the
+// cut. Only a description that never finishes a sentence gets cut.
 const BRIEF_MAX_LENGTH = 120
+const BRIEF_SENTENCE_MAX_LENGTH = 150
 
 const DESCRIPTION_TAG = '@description '
 
@@ -72,19 +75,43 @@ const ABBREVIATIONS = new Set(['e.g.', 'i.e.', 'etc.', 'vs.', 'cf.', 'approx.', 
 function toFirstSentence(text: string): string {
   const firstSentence = findFirstSentence(text) ?? text
 
-  if (firstSentence.length <= BRIEF_MAX_LENGTH) return firstSentence
+  if (firstSentence.length <= BRIEF_SENTENCE_MAX_LENGTH) return firstSentence
 
   const capped = firstSentence.slice(0, BRIEF_MAX_LENGTH)
   const lastSpace = capped.lastIndexOf(' ')
 
-  return `${(lastSpace > 0 ? capped.slice(0, lastSpace) : capped).trimEnd()}…`
+  return `${dropDanglingMarkup(lastSpace > 0 ? capped.slice(0, lastSpace) : capped).trimEnd()}…`
+}
+
+// A word boundary still lands inside a markdown link or a code span often enough to matter, leaving
+// `[label` or a lone backtick that renders as broken markup on hover. Back up to before it opened.
+function dropDanglingMarkup(text: string): string {
+  const ticks = [...text.matchAll(/`/g)]
+  const cuts = [
+    firstUnclosed({ text, open: '(', close: ')' }),
+    firstUnclosed({ text, open: '[', close: ']' }),
+    ticks.length % 2 === 1 ? (ticks.at(-1)?.index ?? -1) : -1,
+  ].filter((index) => index !== -1)
+
+  return text.slice(0, Math.min(...cuts, text.length))
+}
+
+function firstUnclosed({ text, open, close }: { text: string; open: string; close: string }): number {
+  const stack: Array<number> = []
+
+  for (let index = 0; index < text.length; index++) {
+    if (text[index] === open) stack.push(index)
+    if (text[index] === close) stack.pop()
+  }
+
+  return stack[0] ?? -1
 }
 
 function findFirstSentence(text: string): string | null {
   const pattern = /\.(\s|$)/g
 
   for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
-    if (match.index >= BRIEF_MAX_LENGTH) return null
+    if (match.index >= BRIEF_SENTENCE_MAX_LENGTH) return null
 
     const head = text.slice(0, match.index + 1)
     if (endsSentence(head)) return head

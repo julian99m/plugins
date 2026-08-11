@@ -37,6 +37,15 @@ describe('applyCommentLevel', () => {
     ])
   })
 
+  it('keeps a whole sentence that runs a little past the cap', () => {
+    const description =
+      '@description A citation within the message that points to a specific quote from a specific File associated with the assistant or the message. Ignored otherwise.'
+
+    expect(applyCommentLevel([description], 'brief')).toStrictEqual([
+      '@description A citation within the message that points to a specific quote from a specific File associated with the assistant or the message.',
+    ])
+  })
+
   it('caps a long opening sentence at a word boundary', () => {
     const long = `@description ${'word '.repeat(40).trim()}`
     const [result] = applyCommentLevel([long], 'brief')
@@ -56,6 +65,22 @@ describe('applyCommentLevel', () => {
     expect(applyCommentLevel(['@description The role of the message (e.g. `system`, `user`). Defaults to `user`.'], 'brief')).toStrictEqual([
       '@description The role of the message (e.g. `system`, `user`).',
     ])
+  })
+
+  it('backs a cap off a half-written markdown link', () => {
+    const description =
+      '@description The identifier of the run step this delta belongs to, which you hand back to the [retrieve run step](https://platform.example.com/docs/api/runs) endpoint'
+
+    expect(applyCommentLevel([description], 'brief')).toStrictEqual([
+      '@description The identifier of the run step this delta belongs to, which you hand back to the…',
+    ])
+  })
+
+  it('backs a cap off a half-written code span', () => {
+    const description =
+      '@description An object specifying the format that the model must output, for example `{ "type": "json_schema", "strict": true, "name": "reply" }` and nothing more than that'
+
+    expect(applyCommentLevel([description], 'brief')).toStrictEqual(['@description An object specifying the format that the model must output, for example…'])
   })
 
   it('leaves tags other than description alone at brief', () => {
