@@ -8,7 +8,7 @@ import type { GetOrderByIdOptions, GetOrderByIdResponses } from '../../models/st
 import { client } from '../../.kubb/client'
 
 /**
- * @description For valid response try integer IDs with value <= 5 or > 10. Other values will generate exceptions.
+ * @description For valid response try integer IDs with value <= 5 or > 10.
  * @summary Find purchase order by ID
  * {@link /store/order/:orderId}
  */

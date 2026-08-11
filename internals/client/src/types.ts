@@ -1,3 +1,4 @@
+import type { CommentLevel } from '@internals/utils'
 import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
 
 /**
@@ -74,6 +75,15 @@ export type Options = OutputOptions & {
    */
   validator?: ValidatorOptions
   /**
+   * How much of the OpenAPI prose is carried into the JSDoc above each generated operation.
+   * - `'brief'` — `@description` is cut to its first sentence. Every other tag is kept.
+   * - `'full'` — every description in full, however many paragraphs the spec carries.
+   * - `'none'` — no JSDoc at all. The generated-by file banner still appears.
+   *
+   * @default 'brief'
+   */
+  comments?: CommentLevel
+  /**
    * Generates a class-based SDK instead of the standalone functions. Each tag client is an instance
    * class whose constructor takes a client config and builds its own client, so every environment is
    * a separate instance. Leave `sdk` unset to keep the standalone per-operation functions (the
@@ -140,6 +150,7 @@ export type ResolvedOptions = {
   group: Group | null
   baseURL: Options['baseURL']
   validator: NonNullable<Options['validator']>
+  comments: NonNullable<Options['comments']>
   sdk:
     | {
         mode: Mode

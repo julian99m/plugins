@@ -27,6 +27,7 @@ const defaultOptions: PluginFetch['resolvedOptions'] = {
   group: null,
   baseURL: undefined,
   validator: false,
+  comments: 'brief',
   sdk: { mode: 'tag', name: undefined },
   resolver: resolverClient,
 }
