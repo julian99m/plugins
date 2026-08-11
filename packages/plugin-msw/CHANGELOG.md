@@ -1,5 +1,11 @@
 # @kubb/plugin-msw
 
+## 5.0.0-beta.107
+
+### Patch Changes
+
+- [#746](https://github.com/kubb-labs/plugins/pull/746) [`70c29e7`](https://github.com/kubb-labs/plugins/commit/70c29e70d68213ab867dae05480d97899454ece0) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Fix the `headers` block indentation in generated handlers, and remove the blank line left where a response declares no content type. `headers` sat two columns deeper than the `status` beside it in every handler that emits one. Only whitespace changes, so regenerating rewrites existing handler files without changing behavior.
+
 ## 5.0.0-beta.106
 
 ### Patch Changes

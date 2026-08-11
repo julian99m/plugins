@@ -1,5 +1,13 @@
 # e2e
 
+## 0.0.1-beta.40
+
+### Patch Changes
+
+- Updated dependencies [[`cceb284`](https://github.com/kubb-labs/plugins/commit/cceb284cad87f440183bf5ebad5cd922247d7b2b), [`70c29e7`](https://github.com/kubb-labs/plugins/commit/70c29e70d68213ab867dae05480d97899454ece0), [`58b01df`](https://github.com/kubb-labs/plugins/commit/58b01dfc83302d70bd4d3813e80a1a29683d48ab)]:
+  - @kubb/plugin-axios@5.0.0-beta.107
+  - @kubb/plugin-msw@5.0.0-beta.107
+
 ## 0.0.1-beta.39
 
 ### Patch Changes
