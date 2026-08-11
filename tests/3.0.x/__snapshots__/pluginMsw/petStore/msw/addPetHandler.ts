@@ -10,7 +10,7 @@ import { http } from 'msw'
 export function addPetHandlerResponse200(data: AddPetResponse) {
   return new Response(JSON.stringify(data), {
     status: 200,
-      headers: {
+    headers: {
       'Content-Type': 'application/json'
     },
   })
@@ -19,7 +19,7 @@ export function addPetHandlerResponse200(data: AddPetResponse) {
 export function addPetHandlerResponse405(data: AddPetStatus405) {
   return new Response(JSON.stringify(data), {
     status: 405,
-      headers: {
+    headers: {
       'Content-Type': 'application/json'
     },
   })
@@ -31,7 +31,7 @@ export function addPetHandler(data?: AddPetResponse | HttpResponseResolver<Recor
 
       return new Response(JSON.stringify(data), {
         status: 200,
-          headers: {
+        headers: {
           'Content-Type': 'application/json'
         },
       })

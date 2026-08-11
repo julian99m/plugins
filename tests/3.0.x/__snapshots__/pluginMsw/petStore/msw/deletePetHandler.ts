@@ -9,7 +9,7 @@ import { http } from 'msw'
 export function deletePetHandlerResponse400(data: DeletePetStatus400) {
   return new Response(JSON.stringify(data), {
     status: 400,
-      headers: {
+    headers: {
       'Content-Type': 'application/json'
     },
   })
@@ -21,7 +21,6 @@ export function deletePetHandler(data?: string | number | boolean | null | objec
 
       return new Response(JSON.stringify(data), {
         status: 200,
-
       })
     })
 }
