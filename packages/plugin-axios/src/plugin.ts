@@ -44,7 +44,7 @@ export const pluginAxios = definePlugin<PluginAxios>((options) => {
     override = [],
     baseURL,
     validator = false,
-    comments = 'brief',
+    comments = 'full',
     group,
     sdk,
     resolver: userResolver,

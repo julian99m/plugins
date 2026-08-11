@@ -256,13 +256,13 @@ export type Options = OutputOptions & {
   arrayType?: 'generic' | 'array'
   /**
    * How much of each OpenAPI description reaches the JSDoc above generated types.
-   * - `'brief'` cuts each description to its first sentence and keeps every other tag.
    * - `'full'` emits every description in full, however many paragraphs the spec carries.
+   * - `'brief'` cuts each description to its first sentence and keeps every other tag.
    * - `'none'` emits no JSDoc. The generated-by banner still appears.
    *
-   * @default 'brief'
-   * @note Descriptions are a third of the output on a large spec. Pick `'full'` when editor hovers
-   * matter more than file size.
+   * @default 'full'
+   * @note Descriptions are a third of the output on a large spec. Pick `'brief'` or `'none'` when
+   * file size matters more than editor hovers.
    */
   comments?: CommentLevel
   /**

@@ -45,7 +45,7 @@ export const pluginTs = definePlugin<PluginTs>((options) => {
     optionalType = 'questionToken',
     arrayType = 'array',
     syntaxType = 'type',
-    comments = 'brief',
+    comments = 'full',
     printer,
     resolver: userResolver,
     macros: userMacros,

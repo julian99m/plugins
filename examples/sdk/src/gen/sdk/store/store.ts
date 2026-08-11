@@ -60,7 +60,7 @@ export class store {
   }
 
   /**
-   * @description For valid response try integer IDs with value <= 5 or > 10.
+   * @description For valid response try integer IDs with value <= 5 or > 10. Other values will generate exceptions.
    * @summary Find purchase order by ID
    * {@link /store/order/:orderId}
    */
@@ -73,7 +73,7 @@ export class store {
   }
 
   /**
-   * @description For valid response try integer IDs with value < 1000.
+   * @description For valid response try integer IDs with value < 1000. Anything above 1000 or nonintegers will generate API errors
    * @summary Delete purchase order by ID
    * {@link /store/order/:orderId}
    */

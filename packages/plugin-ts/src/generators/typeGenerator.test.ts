@@ -26,7 +26,7 @@ const defaultOptions: PluginTs['resolvedOptions'] = {
   optionalType: 'questionToken',
   arrayType: 'array',
   syntaxType: 'type',
-  comments: 'brief',
+  comments: 'full',
   output: { path: '.', mode: 'directory' },
   exclude: [],
   include: undefined,

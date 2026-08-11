@@ -28,7 +28,7 @@ const defaultOptions: PluginAxios['resolvedOptions'] = {
   group: null,
   baseURL: undefined,
   validator: false,
-  comments: 'brief',
+  comments: 'full',
   sdk: undefined,
   resolver: resolverClient,
 }
