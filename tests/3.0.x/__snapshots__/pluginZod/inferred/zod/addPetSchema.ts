@@ -19,7 +19,7 @@ export const addPetStatus200Schema = z.union([addPetStatus200SchemaJson, addPetS
 
 export type AddPetStatus200SchemaType = z.infer<typeof addPetStatus200Schema>
 
-export const addPetStatus405Schema = z.any()
+export const addPetStatus405Schema = z.unknown()
 
 export type AddPetStatus405SchemaType = z.infer<typeof addPetStatus405Schema>
 

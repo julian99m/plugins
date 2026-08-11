@@ -13,7 +13,7 @@ export const addPetStatus200SchemaXml = petSchema
 
 export const addPetStatus200Schema = z.union([addPetStatus200SchemaJson, addPetStatus200SchemaXml])
 
-export const addPetStatus405Schema = z.any()
+export const addPetStatus405Schema = z.unknown()
 
 export const addPetResponseSchema = addPetStatus200Schema
 

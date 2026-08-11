@@ -10,23 +10,27 @@ import { http } from 'msw'
 export function getPetByIdHandlerResponse200(data: GetPetByIdResponse) {
   return new Response(JSON.stringify(data), {
     status: 200,
-      headers: {
+    headers: {
       'Content-Type': 'application/json'
     },
   })
 }
 
-export function getPetByIdHandlerResponse400(data?: GetPetByIdStatus400) {
+export function getPetByIdHandlerResponse400(data: GetPetByIdStatus400) {
   return new Response(JSON.stringify(data), {
     status: 400,
-
+    headers: {
+      'Content-Type': 'application/json'
+    },
   })
 }
 
-export function getPetByIdHandlerResponse404(data?: GetPetByIdStatus404) {
+export function getPetByIdHandlerResponse404(data: GetPetByIdStatus404) {
   return new Response(JSON.stringify(data), {
     status: 404,
-
+    headers: {
+      'Content-Type': 'application/json'
+    },
   })
 }
 
@@ -36,7 +40,7 @@ export function getPetByIdHandler(data?: GetPetByIdResponse | ((info: Parameters
 
       return new Response(JSON.stringify(data || createGetPetByIdResponse(data)), {
         status: 200,
-          headers: {
+        headers: {
           'Content-Type': 'application/json'
         },
       })

@@ -9,16 +9,18 @@ import { http } from 'msw'
 export function findPetsByStatusHandlerResponse200(data: FindPetsByStatusResponse) {
   return new Response(JSON.stringify(data), {
     status: 200,
-      headers: {
+    headers: {
       'Content-Type': 'application/json'
     },
   })
 }
 
-export function findPetsByStatusHandlerResponse400(data?: FindPetsByStatusStatus400) {
+export function findPetsByStatusHandlerResponse400(data: FindPetsByStatusStatus400) {
   return new Response(JSON.stringify(data), {
     status: 400,
-
+    headers: {
+      'Content-Type': 'application/json'
+    },
   })
 }
 
@@ -28,7 +30,7 @@ export function findPetsByStatusHandler(data?: FindPetsByStatusResponse | ((info
 
       return new Response(JSON.stringify(data), {
         status: 200,
-          headers: {
+        headers: {
           'Content-Type': 'application/json'
         },
       })

@@ -9,7 +9,7 @@ import { http } from 'msw'
 export function getInventoryHandlerResponse200(data: GetInventoryResponse) {
   return new Response(JSON.stringify(data), {
     status: 200,
-      headers: {
+    headers: {
       'Content-Type': 'application/json'
     },
   })
@@ -21,7 +21,7 @@ export function getInventoryHandler(data?: GetInventoryResponse | ((info: Parame
 
       return new Response(JSON.stringify(data), {
         status: 200,
-          headers: {
+        headers: {
           'Content-Type': 'application/json'
         },
       })
