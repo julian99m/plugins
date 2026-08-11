@@ -30,20 +30,14 @@ export function Response({ name, typeName, response }: Props): KubbReactNode {
   )
 
   const responseName = `${name}Response${statusCode}`
+  const headersBlock = headers.length ? `\n      headers: {\n        ${headers.join(', \n')}\n      },` : ''
 
   return (
     <File.Source name={responseName} isIndexable isExportable>
       <Function name={responseName} export params={params ?? ''}>
         {`
     return new Response(JSON.stringify(data), {
-      status: ${statusCode},
-      ${
-        headers.length
-          ? `  headers: {
-        ${headers.join(', \n')}
-      },`
-          : ''
-      }
+      status: ${statusCode},${headersBlock}
     })`}
       </Function>
     </File.Source>

@@ -49,6 +49,7 @@ export function Mock({ baseURL = '', name, fakerName, typeName, requestTypeName,
   const requestUrl = `${baseURL}${url.replace(/([^/]):/g, '$1\\\\:')}`
   const urlLiteral = fakerName ? `'${requestUrl}'` : `\`${requestUrl}\``
   const responseBody = fakerName ? `JSON.stringify(data || ${fakerName}(data))` : 'JSON.stringify(data)'
+  const headersBlock = headers.length ? `\n      headers: {\n        ${headers.join(', \n')}\n      },` : ''
 
   return (
     <File.Source name={name} isIndexable isExportable>
@@ -57,14 +58,7 @@ export function Mock({ baseURL = '', name, fakerName, typeName, requestTypeName,
     if(typeof data === 'function') return data(info)
 
     return new Response(${responseBody}, {
-      status: ${statusCode},
-      ${
-        headers.length
-          ? `  headers: {
-        ${headers.join(', \n')}
-      },`
-          : ''
-      }
+      status: ${statusCode},${headersBlock}
     })
   })`}
       </Function>

@@ -10,7 +10,7 @@ import { http } from 'msw'
 export function uploadFileHandlerResponse200(data: UploadFileResponse) {
   return new Response(JSON.stringify(data), {
     status: 200,
-      headers: {
+    headers: {
       'Content-Type': 'application/json'
     },
   })
@@ -22,7 +22,7 @@ export function uploadFileHandler(data?: UploadFileResponse | HttpResponseResolv
 
       return new Response(JSON.stringify(data), {
         status: 200,
-          headers: {
+        headers: {
           'Content-Type': 'application/json'
         },
       })

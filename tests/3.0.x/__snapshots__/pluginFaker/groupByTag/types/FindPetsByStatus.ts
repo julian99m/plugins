@@ -20,7 +20,7 @@ export type FindPetsByStatusStatus200Xml = Pet[];
 
 export type FindPetsByStatusStatus200 = (FindPetsByStatusStatus200Json | FindPetsByStatusStatus200Xml);
 
-export type FindPetsByStatusStatus400 = any;
+export type FindPetsByStatusStatus400 = unknown;
 
 export type FindPetsByStatusOptions = {
     body?: never;

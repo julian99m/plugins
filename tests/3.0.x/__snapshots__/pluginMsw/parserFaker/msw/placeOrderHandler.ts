@@ -11,16 +11,18 @@ import { http } from 'msw'
 export function placeOrderHandlerResponse200(data: PlaceOrderResponse) {
   return new Response(JSON.stringify(data), {
     status: 200,
-      headers: {
+    headers: {
       'Content-Type': 'application/json'
     },
   })
 }
 
-export function placeOrderHandlerResponse405(data?: PlaceOrderStatus405) {
+export function placeOrderHandlerResponse405(data: PlaceOrderStatus405) {
   return new Response(JSON.stringify(data), {
     status: 405,
-
+    headers: {
+      'Content-Type': 'application/json'
+    },
   })
 }
 
@@ -30,7 +32,7 @@ export function placeOrderHandler(data?: PlaceOrderResponse | HttpResponseResolv
 
       return new Response(JSON.stringify(data || createPlaceOrderResponse(data)), {
         status: 200,
-          headers: {
+        headers: {
           'Content-Type': 'application/json'
         },
       })
