@@ -1,4 +1,4 @@
-import { applyCommentLevel, type CommentLevel } from '@internals/utils'
+import { applyCommentLevel } from '@internals/utils'
 import { ast, type Group, type NodeCache, type Output, type Resolver, type ResolverFileParams, Url } from 'kubb/kit'
 import { dedupeParams } from './params.ts'
 
@@ -145,11 +145,13 @@ export type BuildOperationCommentsOptions = {
   link?: OperationCommentLink
   linkPosition?: 'beforeDeprecated' | 'afterDeprecated'
   splitLines?: boolean
+  // Not imported from `@internals/utils`: this package keeps `@internals/*` external, so the
+  // import would survive into the published `.d.ts`, where most plugins cannot resolve it.
   /**
    * How much of each description to keep. Mirrors the `comments` option on the plugin that owns
    * the generated file.
    */
-  level?: CommentLevel
+  level?: 'full' | 'brief' | 'none'
 }
 
 type ResponseLike = {
