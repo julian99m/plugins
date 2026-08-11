@@ -17,7 +17,7 @@ export type DeletePetHeaders = {
     api_key?: string;
 };
 
-export type DeletePetStatus400 = any;
+export type DeletePetStatus400 = unknown;
 
 export type DeletePetOptions = {
     body?: never;

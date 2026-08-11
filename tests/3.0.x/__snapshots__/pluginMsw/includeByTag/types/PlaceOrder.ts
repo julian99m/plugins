@@ -7,7 +7,7 @@ import type { Order } from './Order'
 
 export type PlaceOrderStatus200 = Order;
 
-export type PlaceOrderStatus405 = any;
+export type PlaceOrderStatus405 = unknown;
 
 export type PlaceOrderBodyJson = Order | undefined;
 

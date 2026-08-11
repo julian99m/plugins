@@ -17,10 +17,12 @@ export function placeOrderHandlerResponse200(data: PlaceOrderResponse) {
   })
 }
 
-export function placeOrderHandlerResponse405(data?: PlaceOrderStatus405) {
+export function placeOrderHandlerResponse405(data: PlaceOrderStatus405) {
   return new Response(JSON.stringify(data), {
     status: 405,
-
+      headers: {
+      'Content-Type': 'application/json'
+    },
   })
 }
 
