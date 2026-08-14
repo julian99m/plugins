@@ -45,7 +45,7 @@ catalog:
 #  kubb: link:../kubb/packages/kubb
 #  unplugin-kubb: link:../kubb/packages/unplugin-kubb
 
-minimumReleaseAge: 4320 # 72 hours, matches .npmrc min-package-age and CI's SAFE_CHAIN_MINIMUM_PACKAGE_AGE_HOURS
+minimumReleaseAge: 4320 # 72 hours, matches CI's SAFE_CHAIN_MINIMUM_PACKAGE_AGE_HOURS
 minimumReleaseAgeExclude:
   - '@kubb/*'
   - 'kubb'
