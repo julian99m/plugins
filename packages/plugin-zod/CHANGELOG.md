@@ -1,5 +1,11 @@
 # @kubb/plugin-zod
 
+## 5.0.0-beta.109
+
+### Patch Changes
+
+- [`6789de7`](https://github.com/kubb-labs/plugins/commit/6789de79a2e94563c5e11b98eb98eaa698a893e7) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Target `kubb` `5.0.0-beta.109`.
+
 ## 5.0.0-beta.106
 
 ### Patch Changes
