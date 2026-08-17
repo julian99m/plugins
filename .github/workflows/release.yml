@@ -73,11 +73,11 @@ jobs:
         # with the `latest` tag, then rebuild and publish.
         run: |
           pnpm -r exec bash -c '
-            npm --no-git-tag-version version minor || true
+            pnpm --no-git-tag-version version minor
             version=$(node -p "require(\"./package.json\").version")
             canary_version="${version}-canary.$(date +%Y%m%dT%H%M%S)"
             echo "Version that will be published: ${canary_version}"
-            npm --no-git-tag-version version "${canary_version}" || true
+            pnpm --no-git-tag-version version "${canary_version}" --allow-same-version
           '
           pnpm run build
           pnpm exec changeset publish --tag canary
