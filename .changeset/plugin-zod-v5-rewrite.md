@@ -1,5 +1,5 @@
 ---
-"@kubb/plugin-zod": minor
+"@kubb/plugin-zod": major
 ---
 
 Rewrite to v5 AST-based architecture. The plugin no longer depends on `@kubb/plugin-oas` or `@kubb/oas`.

@@ -2,9 +2,15 @@
 "@kubb/plugin-ts": major
 ---
 
-**Breaking:** Replace `legacy` option with `resolver`:
+**Breaking:** Replace the `legacy` option with `resolver`. The default now uses v5 naming conventions, and passing a `resolver` customizes naming instead. A resolver you pass overrides the base resolver from the preset.
 
-- Default — v5 naming conventions
-- Use `resolver` option for custom naming
+**Breaking:** Remove several deprecated options in favor of `adapterOas(...)`:
 
-Resolver precedence: base resolver from preset, then explicit `resolver` overrides.
+| Removed | Replacement |
+|---|---|
+| `enumSuffix` | `adapterOas({ enumSuffix })` |
+| `dateType` | `adapterOas({ dateType })` |
+| `integerType` | `adapterOas({ integerType })` |
+| `unknownType` | `adapterOas({ unknownType })` |
+| `emptySchemaType` | `adapterOas({ emptySchemaType })` |
+| `contentType` | `adapterOas({ contentType })` |
