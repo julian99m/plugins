@@ -8,4 +8,4 @@
 
 Consume the shared codegen helpers (`stringify`, `trimQuotes`, `jsStringEscape`, `toRegExpString`,
 `stringifyObject`, `getNestedAccessor`, `buildJSDoc`) from `@kubb/ast/utils` instead of keeping
-local copies in `@internals/utils`. Generated output is unchanged.
+local copies. Generated output is unchanged.

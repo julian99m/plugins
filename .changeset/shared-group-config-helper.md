@@ -9,4 +9,4 @@
 "@kubb/plugin-mcp": patch
 ---
 
-Replace the per-plugin `group` naming block (duplicated verbatim across nine plugins) with a shared `createGroupConfig` helper from `@internals/shared`. A user-provided `group.name` is still honored across every plugin. The default folder name is covered by the separate group-folder changeset.
+Replace the per-plugin `group` naming block (duplicated verbatim across nine plugins) with a shared `createGroupConfig` helper. A user-provided `group.name` is still honored across every plugin. The default folder name is covered by the separate group-folder changeset.
