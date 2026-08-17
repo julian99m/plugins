@@ -4,7 +4,7 @@
 
 **Breaking:** Rewrite to v5 architecture.
 
-- Plugin rewritten to use `definePlugin`, hook-style generators, and shared `@internals/tanstack-query` package
+- Plugin rewritten to use `definePlugin`, hook-style generators, and a shared TanStack Query package
 - No longer depends on `pluginOas()` — use `adapterOas()` in the `adapter` field instead
 - `transformers.name` callback replaced by `resolver` option
 
