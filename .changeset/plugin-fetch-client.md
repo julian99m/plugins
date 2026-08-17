@@ -9,4 +9,4 @@ Add `@kubb/plugin-fetch`, an HTTP client plugin pinned to the Fetch API. Each op
 
 The runtime is always bundled into `.kubb/client.ts`, so generated code never imports from `@kubb/plugin-fetch` and the only runtime dependency is the global `fetch`. A default `client` and a `createClient` factory are exported from the generated output. Swap or extend the transport through the client config (`client.setConfig({ transport })`).
 
-Options: `output`, `group`, `include`/`exclude`/`override`, `baseURL`, `parser` (zod, success bodies only), and `macros`.
+Options: `output`, `group`, `include`/`exclude`/`override`, `baseURL`, `validator` (zod, success bodies only), and `macros`.

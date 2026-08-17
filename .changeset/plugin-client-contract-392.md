@@ -8,7 +8,7 @@
 
 Migrate the client plugins to the shared `RequestResult` contract and remove `dataReturnType` (#392).
 
-`@kubb/plugin-client` now generates operations that return `RequestResult` (`{ data, error, request, response }`) with `throwOnError` defaulting to `true`, the same contract `@kubb/plugin-fetch` and `@kubb/plugin-axios` already ship. The query plugins (react-query, vue-query, swr) take a single `client: 'fetch' | 'axios'` option: `'fetch'`/`'axios'` (or any registered contract client, including `@kubb/plugin-client`) route through the contract. `@kubb/plugin-mcp` and `@kubb/plugin-cypress` drop `dataReturnType` as well.
+`@kubb/plugin-client` now generates operations that return `RequestResult` (`{ data, error, request, response }`) with `throwOnError` defaulting to `true`, the same contract `@kubb/plugin-fetch` and `@kubb/plugin-axios` already ship. The query plugins (react-query, vue-query, swr) take a single `client: 'fetch' | 'axios'` option that routes through the matching registered contract client plugin, auto-detected when only one is registered. `@kubb/plugin-mcp` and `@kubb/plugin-cypress` drop `dataReturnType` as well.
 
 **Breaking. Migration:**
 

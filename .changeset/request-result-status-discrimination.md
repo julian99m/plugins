@@ -19,4 +19,4 @@ switch (result.status) {
 }
 ```
 
-The change is additive. `data`, `error`, `request`, and `response` keep their shapes, `if (result.error)` still splits success from failure, and `result.status` falls back to `number` for an operation with no documented responses. With `throwOnError` (the default) the result stays the union of the 2xx variants and `error` is `undefined`. `@kubb/plugin-client` injects the same runtime, so its generated output and the query plugins built on it gain the narrowing too.
+The change is additive. `data`, `error`, `request`, and `response` keep their shapes, `if (result.error)` still splits success from failure, and `result.status` falls back to `number` for an operation with no documented responses. With `throwOnError` (the default) the result stays the union of the 2xx variants and `error` is `undefined`. The query plugins built on `plugin-fetch` / `plugin-axios` gain the same narrowing.

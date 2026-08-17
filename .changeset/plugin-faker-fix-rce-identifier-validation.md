@@ -4,4 +4,4 @@
 
 Fix potential Remote Code Execution in identifier validation.
 
-Replace `new Function()` usage in `isValidStrictIdentifier` with a safe regex check combined with a reserved-word allowlist. This eliminates the RCE attack surface without changing any observable behavior.
+Replace `new Function()` usage in the shared identifier-validation helper (now `isValidVarName` in `@internals/utils`) with a safe regex check combined with a reserved-word allowlist. This eliminates the RCE attack surface without changing any observable behavior.

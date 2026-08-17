@@ -9,6 +9,6 @@ Both plugins now use shared helpers from `@kubb/ast`:
 - `findCircularSchemas(schemas)`: detects all schemas involved in a cycle (direct or indirect)
 - `containsCircularRef(node, { circularSchemas, excludeName? })`: checks whether a property transitively references a cyclic schema
 
-`plugin-faker` emits lazy getter syntax (`get archEnemy() { return fakePet() }`) for properties that reference an indirect cycle, preventing stack overflows at construction time. Direct self-references continue to emit `undefined as any`.
+`plugin-faker` emits a lazy, memoizing getter for properties that reference an indirect cycle, preventing stack overflows at construction time. Direct self-references continue to emit `undefined as unknown as <Type>`.
 
 `plugin-zod` wraps cyclic `$ref`s in `z.lazy(() => …)` and emits object properties as getters when the property schema references a cyclic schema. The getter body is generated without redundant `z.lazy()` wrappers, using a closure-level flag instead of post-processing string replacement.

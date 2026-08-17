@@ -10,13 +10,10 @@
 "@kubb/plugin-redoc": major
 ---
 
-**Breaking:** Rename factory functions from `define*` to `create*`, and rename `PluginManager` to `PluginDriver`. `defineConfig` is unchanged.
+**Breaking:** Rename `defineAdapter` to `createAdapter` and `PluginManager` to `KubbDriver`. `definePlugin`, `defineGenerator`, and `defineConfig` are unchanged.
 
 | Before | After |
 |---|---|
-| `definePlugin` | `createPlugin` |
 | `defineAdapter` | `createAdapter` |
-| `defineGenerator` | `createGenerator` |
-| `PluginManager` | `PluginDriver` |
+| `PluginManager` | `KubbDriver` |
 | `pluginManager` (context property) | `driver` |
-| `usePluginManager` | `usePluginDriver` |
