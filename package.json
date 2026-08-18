@@ -2,7 +2,7 @@
   "name": "@kubb/plugins",
   "version": "0.0.0",
   "private": true,
-  "description": "Kubb's monorepo",
+  "description": "Kubb's monorepo for plugins",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
