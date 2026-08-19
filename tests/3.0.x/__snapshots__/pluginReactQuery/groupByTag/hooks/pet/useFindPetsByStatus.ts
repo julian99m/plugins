@@ -5,7 +5,7 @@
 
 import type { RequestConfig, ResponseErrorConfig } from '../../.kubb/client'
 import type { FindPetsByStatusOptions, FindPetsByStatusStatus200, FindPetsByStatusStatus400 } from '../../types/FindPetsByStatus'
-import type { QueryKey, QueryClient, QueryObserverOptions, UseQueryResult } from '@tanstack/react-query'
+import type { UndefinedInitialDataOptions, DataTag, QueryKey, QueryClient, QueryObserverOptions, UseQueryResult } from '@tanstack/react-query'
 import { findPetsByStatus } from '../../clients/findPetsByStatus'
 import { queryOptions, useQuery } from '@tanstack/react-query'
 
@@ -13,9 +13,9 @@ export const findPetsByStatusQueryKey = ({ query }: Omit<FindPetsByStatusOptions
 
 type FindPetsByStatusQueryKey = ReturnType<typeof findPetsByStatusQueryKey>
 
-export function findPetsByStatusQueryOptions({ query }: FindPetsByStatusOptions = {}, config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {}) {
+export function findPetsByStatusQueryOptions({ query }: FindPetsByStatusOptions = {}, config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {}): UndefinedInitialDataOptions<FindPetsByStatusStatus200, ResponseErrorConfig<FindPetsByStatusStatus400>, FindPetsByStatusStatus200, FindPetsByStatusQueryKey> & { queryKey: DataTag<FindPetsByStatusQueryKey, FindPetsByStatusStatus200, ResponseErrorConfig<FindPetsByStatusStatus400>> } {
   const queryKey = findPetsByStatusQueryKey({ query })
-  return queryOptions<FindPetsByStatusStatus200, ResponseErrorConfig<FindPetsByStatusStatus400>, FindPetsByStatusStatus200, typeof queryKey>({
+  return queryOptions<FindPetsByStatusStatus200, ResponseErrorConfig<FindPetsByStatusStatus400>, FindPetsByStatusStatus200, FindPetsByStatusQueryKey>({
    queryKey,
    queryFn: async ({ signal }) => {
       const { data } = await findPetsByStatus({ ...config, query, signal: config.signal ?? signal, throwOnError: true })

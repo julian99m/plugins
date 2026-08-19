@@ -5,7 +5,7 @@
 
 import type { RequestConfig, ResponseErrorConfig } from '../.kubb/client'
 import type { GetInventoryStatus200 } from '../types/GetInventory'
-import type { QueryKey, QueryClient, UseSuspenseQueryOptions, UseSuspenseQueryResult } from '@tanstack/react-query'
+import type { UndefinedInitialDataOptions, DataTag, QueryKey, QueryClient, UseSuspenseQueryOptions, UseSuspenseQueryResult } from '@tanstack/react-query'
 import { getInventory } from '../clients/getInventory'
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 
@@ -13,9 +13,9 @@ export const getInventorySuspenseQueryKey = () => [{ url: '/store/inventory' }] 
 
 type GetInventorySuspenseQueryKey = ReturnType<typeof getInventorySuspenseQueryKey>
 
-export function getInventorySuspenseQueryOptions(config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {}) {
+export function getInventorySuspenseQueryOptions(config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {}): UndefinedInitialDataOptions<GetInventoryStatus200, ResponseErrorConfig<Error>, GetInventoryStatus200, GetInventorySuspenseQueryKey> & { queryKey: DataTag<GetInventorySuspenseQueryKey, GetInventoryStatus200, ResponseErrorConfig<Error>> } {
   const queryKey = getInventorySuspenseQueryKey()
-  return queryOptions<GetInventoryStatus200, ResponseErrorConfig<Error>, GetInventoryStatus200, typeof queryKey>({
+  return queryOptions<GetInventoryStatus200, ResponseErrorConfig<Error>, GetInventoryStatus200, GetInventorySuspenseQueryKey>({
    queryKey,
    queryFn: async ({ signal }) => {
       const { data } = await getInventory({ ...config, signal: config.signal ?? signal, throwOnError: true })
