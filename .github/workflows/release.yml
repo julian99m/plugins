@@ -68,9 +68,8 @@ jobs:
         env:
           NPM_CONFIG_PROVENANCE: true
         # Stamp each package to a unique canary version so it can't collide
-        # with the `latest` tag, then rebuild and publish. --no-git-checks is
-        # required: the first bump dirties the tree, which would make pnpm
-        # version refuse for every package after it.
+        # with the `latest` tag. --no-git-checks: the first bump dirties the
+        # tree, which would make pnpm version refuse for every package after it.
         run: |
           pnpm -r exec bash -c '
             pnpm --no-git-tag-version version minor --no-git-checks
