@@ -37,7 +37,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Tools
-        uses: kubb-labs/config/.github/setup@909a85919614def70d99dff599c943f1c5755975 # main
+        uses: kubb-labs/config/.github/setup@3f4c08f50e67174c9e0ba09290bc79199f50ddfb # main
         with:
           node-version: '22.22.3'
           cache: 'false'
@@ -56,13 +56,11 @@ jobs:
 
       - name: Release
         id: release
-        uses: kubb-labs/config/.github/actions/release@909a85919614def70d99dff599c943f1c5755975 # main
+        uses: kubb-labs/config/.github/actions/release@3f4c08f50e67174c9e0ba09290bc79199f50ddfb # main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       # Canary skips staging on purpose, so it stays automatic on every push.
-      # If the npm Trusted Publisher for these packages is ever locked to
-      # stage-only, this step will need its own non-stage-restricted entry.
       - name: Publish canary
         if: ${{ steps.release.outputs.staged != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         continue-on-error: true
@@ -70,14 +68,15 @@ jobs:
         env:
           NPM_CONFIG_PROVENANCE: true
         # Stamp each package to a unique canary version so it can't collide
-        # with the `latest` tag, then rebuild and publish.
+        # with the `latest` tag. --no-git-checks: the first bump dirties the
+        # tree, which would make pnpm version refuse for every package after it.
         run: |
           pnpm -r exec bash -c '
-            pnpm --no-git-tag-version version minor
+            pnpm --no-git-tag-version version minor --no-git-checks
             version=$(node -p "require(\"./package.json\").version")
             canary_version="${version}-canary.$(date +%Y%m%dT%H%M%S)"
             echo "Version that will be published: ${canary_version}"
-            pnpm --no-git-tag-version version "${canary_version}" --allow-same-version
+            pnpm --no-git-tag-version version "${canary_version}" --allow-same-version --no-git-checks
           '
           pnpm run build
           pnpm exec changeset publish --tag canary
@@ -101,19 +100,16 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Tools
-        uses: kubb-labs/config/.github/setup@909a85919614def70d99dff599c943f1c5755975 # main
+        uses: kubb-labs/config/.github/setup@3f4c08f50e67174c9e0ba09290bc79199f50ddfb # main
         with:
           node-version: '22.22.3'
           cache: 'false'
 
-      # Every staged package gets its own release here, since packages in
-      # this repo version and changelog independently (see the empty `fixed`
-      # and `linked` groups in .changeset/config.json) — unlike kubb-labs/kubb,
-      # where every package shares one fixed version and one combined release,
-      # so this omits release-mode (defaults to per-package).
+      # Packages here version independently, so release-mode is omitted and
+      # defaults to per-package.
       - name: Promote
         id: promote
-        uses: kubb-labs/config/.github/actions/promote@909a85919614def70d99dff599c943f1c5755975 # main
+        uses: kubb-labs/config/.github/actions/promote@3f4c08f50e67174c9e0ba09290bc79199f50ddfb # main
         with:
           staged-packages: ${{ needs.release.outputs.staged_packages }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
