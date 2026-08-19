@@ -6,7 +6,7 @@
 
 import type { RequestConfig, ResponseErrorConfig } from './.kubb/client'
 import type { GetPetByIdOptions, GetPetByIdStatus200, GetPetByIdStatus400 } from './GetPetById'
-import type { QueryKey, QueryClient, UseSuspenseQueryOptions, UseSuspenseQueryResult } from '@tanstack/react-query'
+import type { UndefinedInitialDataOptions, DataTag, QueryKey, QueryClient, UseSuspenseQueryOptions, UseSuspenseQueryResult } from '@tanstack/react-query'
 import { getPetById } from './clients/getPetById'
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 
@@ -17,9 +17,11 @@ type GetPetByIdSuspenseQueryKey = ReturnType<typeof getPetByIdSuspenseQueryKey>
 export function getPetByIdSuspenseQueryOptions(
   { path }: GetPetByIdOptions,
   config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {},
-) {
+): UndefinedInitialDataOptions<GetPetByIdStatus200, ResponseErrorConfig<GetPetByIdStatus400>, GetPetByIdStatus200, GetPetByIdSuspenseQueryKey> & {
+  queryKey: DataTag<GetPetByIdSuspenseQueryKey, GetPetByIdStatus200, ResponseErrorConfig<GetPetByIdStatus400>>
+} {
   const queryKey = getPetByIdSuspenseQueryKey({ path })
-  return queryOptions<GetPetByIdStatus200, ResponseErrorConfig<GetPetByIdStatus400>, GetPetByIdStatus200, typeof queryKey>({
+  return queryOptions<GetPetByIdStatus200, ResponseErrorConfig<GetPetByIdStatus400>, GetPetByIdStatus200, GetPetByIdSuspenseQueryKey>({
     queryKey,
     queryFn: async ({ signal }) => {
       const { data } = await getPetById({ ...config, path, signal: config.signal ?? signal, throwOnError: true })

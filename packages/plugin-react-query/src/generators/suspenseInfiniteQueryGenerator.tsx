@@ -98,11 +98,13 @@ export const suspenseInfiniteQueryGenerator = defineGenerator<PluginReactQuery>(
 
         <File.Import name={['InfiniteData']} isTypeOnly path={importPath} />
         <File.Import name={['infiniteQueryOptions']} path={importPath} />
+        <File.Import name={['UndefinedInitialDataInfiniteOptions', 'DataTag']} path={importPath} isTypeOnly />
 
         <InfiniteQueryOptions
           name={queryOptionsName}
           clientName={calledClientName}
           queryKeyName={queryKeyName}
+          queryKeyTypeName={queryKeyTypeName}
           node={node}
           tsResolver={tsResolver}
           cursorParam={infiniteOptions.cursorParam}

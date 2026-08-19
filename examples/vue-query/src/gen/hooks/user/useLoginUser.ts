@@ -5,6 +5,7 @@
 
 import type { RequestConfig, ResponseErrorConfig } from '../../.kubb/client'
 import type { LoginUserOptions, LoginUserStatus200, LoginUserStatus400 } from '../../models/user/LoginUser'
+import type { UndefinedInitialQueryOptions, DataTag } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
 import { loginUser } from '../../clients/user/loginUser'
 import { queryOptions } from '@tanstack/vue-query'
@@ -18,9 +19,11 @@ export type LoginUserQueryKey = ReturnType<typeof loginUserQueryKey>
 export function loginUserQueryOptions(
   { query }: { query?: MaybeRefOrGetter<LoginUserOptions['query']> } = {},
   config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {},
-) {
+): UndefinedInitialQueryOptions<LoginUserStatus200, ResponseErrorConfig<LoginUserStatus400>, LoginUserStatus200, LoginUserQueryKey> & {
+  queryKey: DataTag<LoginUserQueryKey, LoginUserStatus200, ResponseErrorConfig<LoginUserStatus400>>
+} {
   const queryKey = loginUserQueryKey({ query })
-  return queryOptions<LoginUserStatus200, ResponseErrorConfig<LoginUserStatus400>, LoginUserStatus200>({
+  return queryOptions<LoginUserStatus200, ResponseErrorConfig<LoginUserStatus400>, LoginUserStatus200, LoginUserQueryKey>({
     queryKey,
     queryFn: async ({ signal }) => {
       const { data } = await loginUser({ ...config, query: toValue(query), signal: config.signal ?? signal, throwOnError: true })

@@ -9,6 +9,7 @@ type Props = {
   name: string
   clientName: string
   queryKeyName: string
+  queryKeyTypeName: string
   node: ast.OperationNode
   tsResolver: ResolverTs
   initialPageParam: Infinite['initialPageParam']

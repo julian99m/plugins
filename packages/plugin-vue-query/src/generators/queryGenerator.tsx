@@ -83,8 +83,16 @@ export const queryGenerator = defineGenerator<PluginVueQuery>({
         <QueryKey name={queryKeyName} typeName={queryKeyTypeName} node={node} tsResolver={tsResolver} transformer={ctx.options.queryKey} />
 
         <File.Import name={['queryOptions']} path={importPath} />
+        <File.Import name={['UndefinedInitialQueryOptions', 'DataTag']} path={importPath} isTypeOnly />
 
-        <QueryOptions name={queryOptionsName} clientName={calledClientName} queryKeyName={queryKeyName} node={node} tsResolver={tsResolver} />
+        <QueryOptions
+          name={queryOptionsName}
+          clientName={calledClientName}
+          queryKeyName={queryKeyName}
+          queryKeyTypeName={queryKeyTypeName}
+          node={node}
+          tsResolver={tsResolver}
+        />
 
         {query && hooks && (
           <>

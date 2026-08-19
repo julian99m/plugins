@@ -11,6 +11,7 @@ type Props = {
   name: string
   clientName: string
   queryKeyName: string
+  queryKeyTypeName: string
   node: ast.OperationNode
   tsResolver: ResolverTs
   initialPageParam: Infinite['initialPageParam']
@@ -49,6 +50,7 @@ export function InfiniteQueryOptions({
   tsResolver,
   queryParam,
   queryKeyName,
+  queryKeyTypeName,
   queryKeyType = 'typeof queryKey',
   memberTypeWrapper,
   unwrapName,
@@ -103,9 +105,14 @@ export function InfiniteQueryOptions({
   const queryFnArgs = infiniteOverrideParams ? '{ signal, pageParam }' : '{ signal }'
   const queryFnStatements = infiniteOverrideParams ? `${infiniteOverrideParams}\n    ${queryFnBody}` : queryFnBody
 
+  // Explicit return type built from exported public types, so `tsc` never has to infer and
+  // name `infiniteQueryOptions`'s branded return type (unexported `dataTagSymbol`) in
+  // declaration emit. See https://github.com/TanStack/query/issues/10904.
+  const returnType = `UndefinedInitialDataInfiniteOptions<${queryFnDataType}, ${errorType}, InfiniteData<${queryFnDataType}>, ${queryKeyTypeName}, ${pageParamType}> & { queryKey: DataTag<${queryKeyTypeName}, InfiniteData<${queryFnDataType}>, ${errorType}> }`
+
   return (
     <File.Source name={name} isExportable isIndexable>
-      <Function name={name} export params={paramsSignature}>
+      <Function name={name} export params={paramsSignature} returnType={returnType}>
         {`
 const queryKey = ${queryKeyName}(${queryKeyParamsCall})
 return infiniteQueryOptions<${queryFnDataType}, ${errorType}, InfiniteData<${queryFnDataType}>, ${queryKeyType}, ${pageParamType}>({

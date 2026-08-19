@@ -6,7 +6,7 @@
 
 import type { RequestConfig, ResponseErrorConfig } from './.kubb/client'
 import type { CreateUsersWithListInputOptions, CreateUsersWithListInputStatus200 } from './CreateUsersWithListInput'
-import type { QueryKey, QueryClient, QueryObserverOptions, UseQueryResult } from '@tanstack/react-query'
+import type { UndefinedInitialDataOptions, DataTag, QueryKey, QueryClient, QueryObserverOptions, UseQueryResult } from '@tanstack/react-query'
 import { createUsersWithListInput } from './clients/createUsersWithListInput'
 import { queryOptions, useQuery } from '@tanstack/react-query'
 
@@ -18,9 +18,14 @@ type CreateUsersWithListInputQueryKey = ReturnType<typeof createUsersWithListInp
 export function createUsersWithListInputQueryOptions(
   { body }: CreateUsersWithListInputOptions,
   config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {},
-) {
+): UndefinedInitialDataOptions<
+  CreateUsersWithListInputStatus200,
+  ResponseErrorConfig<Error>,
+  CreateUsersWithListInputStatus200,
+  CreateUsersWithListInputQueryKey
+> & { queryKey: DataTag<CreateUsersWithListInputQueryKey, CreateUsersWithListInputStatus200, ResponseErrorConfig<Error>> } {
   const queryKey = createUsersWithListInputQueryKey({ body })
-  return queryOptions<CreateUsersWithListInputStatus200, ResponseErrorConfig<Error>, CreateUsersWithListInputStatus200, typeof queryKey>({
+  return queryOptions<CreateUsersWithListInputStatus200, ResponseErrorConfig<Error>, CreateUsersWithListInputStatus200, CreateUsersWithListInputQueryKey>({
     queryKey,
     queryFn: async ({ signal }) => {
       const { data } = await createUsersWithListInput({ ...config, body, signal: config.signal ?? signal, throwOnError: true })

@@ -84,8 +84,16 @@ export const queryGenerator = defineGenerator<PluginReactQuery>({
         <QueryKey name={queryKeyName} typeName={queryKeyTypeName} node={node} tsResolver={tsResolver} transformer={ctx.options.queryKey} />
 
         <File.Import name={['queryOptions']} path={importPath} />
+        <File.Import name={['UndefinedInitialDataOptions', 'DataTag']} path={importPath} isTypeOnly />
 
-        <QueryOptions name={queryOptionsName} clientName={calledClientName} queryKeyName={queryKeyName} node={node} tsResolver={tsResolver} />
+        <QueryOptions
+          name={queryOptionsName}
+          clientName={calledClientName}
+          queryKeyName={queryKeyName}
+          queryKeyTypeName={queryKeyTypeName}
+          node={node}
+          tsResolver={tsResolver}
+        />
 
         {query && hooks && (
           <>

@@ -11,6 +11,7 @@ type Props = {
   name: string
   clientName: string
   queryKeyName: string
+  queryKeyTypeName: string
   node: ast.OperationNode
   tsResolver: ResolverTs
 }
@@ -22,7 +23,7 @@ export function getQueryOptionsParams(node: ast.OperationNode, options: { resolv
   return buildQueryOptionsParams(node, { resolver: options.resolver, memberTypeWrapper: maybeRefOrGetter })
 }
 
-export function QueryOptions({ name, clientName, node, tsResolver, queryKeyName }: Props): KubbReactNode {
+export function QueryOptions({ name, clientName, node, tsResolver, queryKeyName, queryKeyTypeName }: Props): KubbReactNode {
   const { TData, TError } = buildResponseTypes(node, tsResolver)
 
   const queryKeyParamsNode = buildQueryKeyParamsNode(node, { resolver: tsResolver })
@@ -33,12 +34,17 @@ export function QueryOptions({ name, clientName, node, tsResolver, queryKeyName 
   const queryFnBody = `const { data } = await ${buildVueClientCall(node, { clientName, signal: true })}
           return data`
 
+  // Explicit return type built from exported public types, so `tsc` never has to infer and
+  // name `queryOptions`'s branded return type (unexported `dataTagSymbol`) in declaration emit.
+  // See https://github.com/TanStack/query/issues/10904.
+  const returnType = `UndefinedInitialQueryOptions<${TData}, ${TError}, ${TData}, ${queryKeyTypeName}> & { queryKey: DataTag<${queryKeyTypeName}, ${TData}, ${TError}> }`
+
   return (
     <File.Source name={name} isExportable isIndexable>
-      <Function name={name} export params={paramsSignature}>
+      <Function name={name} export params={paramsSignature} returnType={returnType}>
         {`
       const queryKey = ${queryKeyName}(${queryKeyParamsCall})
-      return queryOptions<${TData}, ${TError}, ${TData}>({
+      return queryOptions<${TData}, ${TError}, ${TData}, ${queryKeyTypeName}>({
        queryKey,
        queryFn: async ({ signal }) => {
           ${queryFnBody}

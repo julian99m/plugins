@@ -5,6 +5,7 @@
 
 import type { RequestConfig, ResponseErrorConfig } from '../../.kubb/client'
 import type { GetInventoryStatus200 } from '../../models/store/GetInventory'
+import type { UndefinedInitialDataOptions, DataTag } from '@tanstack/react-query'
 import { getInventory } from '../../clients/store/getInventory'
 import { queryOptions } from '@tanstack/react-query'
 
@@ -12,9 +13,13 @@ export const getInventoryQueryKey = () => [{ url: '/store/inventory' }] as const
 
 type GetInventoryQueryKey = ReturnType<typeof getInventoryQueryKey>
 
-export function getInventoryQueryOptions(config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {}) {
+export function getInventoryQueryOptions(
+  config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {},
+): UndefinedInitialDataOptions<GetInventoryStatus200, ResponseErrorConfig<Error>, GetInventoryStatus200, GetInventoryQueryKey> & {
+  queryKey: DataTag<GetInventoryQueryKey, GetInventoryStatus200, ResponseErrorConfig<Error>>
+} {
   const queryKey = getInventoryQueryKey()
-  return queryOptions<GetInventoryStatus200, ResponseErrorConfig<Error>, GetInventoryStatus200, typeof queryKey>({
+  return queryOptions<GetInventoryStatus200, ResponseErrorConfig<Error>, GetInventoryStatus200, GetInventoryQueryKey>({
     queryKey,
     queryFn: async ({ signal }) => {
       const { data } = await getInventory({ ...config, signal: config.signal ?? signal, throwOnError: true })

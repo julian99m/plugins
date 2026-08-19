@@ -6,7 +6,7 @@
 
 import type { RequestConfig, ResponseErrorConfig } from './.kubb/client'
 import type { UpdatePetWithFormOptions, UpdatePetWithFormStatus200 } from './UpdatePetWithForm'
-import type { QueryKey, QueryClient, UseQueryOptions, UseQueryReturnType } from 'custom-query'
+import type { UndefinedInitialQueryOptions, DataTag, QueryKey, QueryClient, UseQueryOptions, UseQueryReturnType } from 'custom-query'
 import type { MaybeRefOrGetter } from 'vue'
 import { updatePetWithForm } from './clients/updatePetWithForm'
 import { queryOptions, useQuery } from 'custom-query'
@@ -35,9 +35,11 @@ export function updatePetWithFormQueryOptions(
     query?: MaybeRefOrGetter<UpdatePetWithFormOptions['query']>
   },
   config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {},
-) {
+): UndefinedInitialQueryOptions<UpdatePetWithFormStatus200, ResponseErrorConfig<Error>, UpdatePetWithFormStatus200, UpdatePetWithFormQueryKey> & {
+  queryKey: DataTag<UpdatePetWithFormQueryKey, UpdatePetWithFormStatus200, ResponseErrorConfig<Error>>
+} {
   const queryKey = updatePetWithFormQueryKey({ path, body, query })
-  return queryOptions<UpdatePetWithFormStatus200, ResponseErrorConfig<Error>, UpdatePetWithFormStatus200>({
+  return queryOptions<UpdatePetWithFormStatus200, ResponseErrorConfig<Error>, UpdatePetWithFormStatus200, UpdatePetWithFormQueryKey>({
     queryKey,
     queryFn: async ({ signal }) => {
       const { data } = await updatePetWithForm({

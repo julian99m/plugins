@@ -5,6 +5,7 @@
 
 import type { RequestConfig, ResponseErrorConfig } from '../../.kubb/client'
 import type { LogoutUserResponse } from '../../models/user/LogoutUser'
+import type { UndefinedInitialQueryOptions, DataTag } from '@tanstack/vue-query'
 import { logoutUser } from '../../clients/user/logoutUser'
 import { queryOptions } from '@tanstack/vue-query'
 
@@ -12,9 +13,13 @@ export const logoutUserQueryKey = () => [{ url: '/user/logout' }] as const
 
 export type LogoutUserQueryKey = ReturnType<typeof logoutUserQueryKey>
 
-export function logoutUserQueryOptions(config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {}) {
+export function logoutUserQueryOptions(
+  config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {},
+): UndefinedInitialQueryOptions<LogoutUserResponse, ResponseErrorConfig<Error>, LogoutUserResponse, LogoutUserQueryKey> & {
+  queryKey: DataTag<LogoutUserQueryKey, LogoutUserResponse, ResponseErrorConfig<Error>>
+} {
   const queryKey = logoutUserQueryKey()
-  return queryOptions<LogoutUserResponse, ResponseErrorConfig<Error>, LogoutUserResponse>({
+  return queryOptions<LogoutUserResponse, ResponseErrorConfig<Error>, LogoutUserResponse, LogoutUserQueryKey>({
     queryKey,
     queryFn: async ({ signal }) => {
       const { data } = await logoutUser({ ...config, signal: config.signal ?? signal, throwOnError: true })

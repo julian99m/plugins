@@ -5,6 +5,7 @@
 
 import type { RequestConfig, ResponseErrorConfig } from '../../.kubb/client'
 import type { LoginUserOptions, LoginUserStatus200, LoginUserStatus400 } from '../../models/user/LoginUser'
+import type { UndefinedInitialDataOptions, DataTag } from '@tanstack/react-query'
 import { loginUser } from '../../clients/user/loginUser'
 import { queryOptions } from '@tanstack/react-query'
 
@@ -15,9 +16,11 @@ type LoginUserQueryKey = ReturnType<typeof loginUserQueryKey>
 export function loginUserQueryOptions(
   { query }: LoginUserOptions = {},
   config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {},
-) {
+): UndefinedInitialDataOptions<LoginUserStatus200, ResponseErrorConfig<LoginUserStatus400>, LoginUserStatus200, LoginUserQueryKey> & {
+  queryKey: DataTag<LoginUserQueryKey, LoginUserStatus200, ResponseErrorConfig<LoginUserStatus400>>
+} {
   const queryKey = loginUserQueryKey({ query })
-  return queryOptions<LoginUserStatus200, ResponseErrorConfig<LoginUserStatus400>, LoginUserStatus200, typeof queryKey>({
+  return queryOptions<LoginUserStatus200, ResponseErrorConfig<LoginUserStatus400>, LoginUserStatus200, LoginUserQueryKey>({
     queryKey,
     queryFn: async ({ signal }) => {
       const { data } = await loginUser({ ...config, query, signal: config.signal ?? signal, throwOnError: true })

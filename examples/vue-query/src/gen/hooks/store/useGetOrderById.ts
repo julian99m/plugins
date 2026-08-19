@@ -5,6 +5,7 @@
 
 import type { RequestConfig, ResponseErrorConfig } from '../../.kubb/client'
 import type { GetOrderByIdOptions, GetOrderByIdStatus200, GetOrderByIdStatus400, GetOrderByIdStatus404 } from '../../models/store/GetOrderById'
+import type { UndefinedInitialQueryOptions, DataTag } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
 import { getOrderById } from '../../clients/store/getOrderById'
 import { queryOptions } from '@tanstack/vue-query'
@@ -18,9 +19,14 @@ export type GetOrderByIdQueryKey = ReturnType<typeof getOrderByIdQueryKey>
 export function getOrderByIdQueryOptions(
   { path }: { path: MaybeRefOrGetter<GetOrderByIdOptions['path']> },
   config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {},
-) {
+): UndefinedInitialQueryOptions<
+  GetOrderByIdStatus200,
+  ResponseErrorConfig<GetOrderByIdStatus400 | GetOrderByIdStatus404>,
+  GetOrderByIdStatus200,
+  GetOrderByIdQueryKey
+> & { queryKey: DataTag<GetOrderByIdQueryKey, GetOrderByIdStatus200, ResponseErrorConfig<GetOrderByIdStatus400 | GetOrderByIdStatus404>> } {
   const queryKey = getOrderByIdQueryKey({ path })
-  return queryOptions<GetOrderByIdStatus200, ResponseErrorConfig<GetOrderByIdStatus400 | GetOrderByIdStatus404>, GetOrderByIdStatus200>({
+  return queryOptions<GetOrderByIdStatus200, ResponseErrorConfig<GetOrderByIdStatus400 | GetOrderByIdStatus404>, GetOrderByIdStatus200, GetOrderByIdQueryKey>({
     queryKey,
     queryFn: async ({ signal }) => {
       const { data } = await getOrderById({ ...config, path: toValue(path), signal: config.signal ?? signal, throwOnError: true })

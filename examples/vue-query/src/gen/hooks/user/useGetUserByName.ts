@@ -5,6 +5,7 @@
 
 import type { RequestConfig, ResponseErrorConfig } from '../../.kubb/client'
 import type { GetUserByNameOptions, GetUserByNameStatus200, GetUserByNameStatus400, GetUserByNameStatus404 } from '../../models/user/GetUserByName'
+import type { UndefinedInitialQueryOptions, DataTag } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
 import { getUserByName } from '../../clients/user/getUserByName'
 import { queryOptions } from '@tanstack/vue-query'
@@ -18,9 +19,19 @@ export type GetUserByNameQueryKey = ReturnType<typeof getUserByNameQueryKey>
 export function getUserByNameQueryOptions(
   { path }: { path: MaybeRefOrGetter<GetUserByNameOptions['path']> },
   config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {},
-) {
+): UndefinedInitialQueryOptions<
+  GetUserByNameStatus200,
+  ResponseErrorConfig<GetUserByNameStatus400 | GetUserByNameStatus404>,
+  GetUserByNameStatus200,
+  GetUserByNameQueryKey
+> & { queryKey: DataTag<GetUserByNameQueryKey, GetUserByNameStatus200, ResponseErrorConfig<GetUserByNameStatus400 | GetUserByNameStatus404>> } {
   const queryKey = getUserByNameQueryKey({ path })
-  return queryOptions<GetUserByNameStatus200, ResponseErrorConfig<GetUserByNameStatus400 | GetUserByNameStatus404>, GetUserByNameStatus200>({
+  return queryOptions<
+    GetUserByNameStatus200,
+    ResponseErrorConfig<GetUserByNameStatus400 | GetUserByNameStatus404>,
+    GetUserByNameStatus200,
+    GetUserByNameQueryKey
+  >({
     queryKey,
     queryFn: async ({ signal }) => {
       const { data } = await getUserByName({ ...config, path: toValue(path), signal: config.signal ?? signal, throwOnError: true })

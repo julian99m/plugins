@@ -6,7 +6,15 @@
 
 import type { RequestConfig, ResponseErrorConfig } from './.kubb/client'
 import type { FindPetsByTagsOptions, FindPetsByTagsQuery, FindPetsByTagsStatus200 } from './FindPetsByTags'
-import type { InfiniteData, QueryKey, QueryClient, UseInfiniteQueryOptions, UseInfiniteQueryReturnType } from '@tanstack/react-query'
+import type {
+  UndefinedInitialDataInfiniteOptions,
+  DataTag,
+  InfiniteData,
+  QueryKey,
+  QueryClient,
+  UseInfiniteQueryOptions,
+  UseInfiniteQueryReturnType,
+} from '@tanstack/react-query'
 import type { MaybeRefOrGetter } from 'vue'
 import { findPetsByTags } from './clients/findPetsByTags'
 import { infiniteQueryOptions, useInfiniteQuery } from '@tanstack/react-query'
@@ -20,7 +28,13 @@ export type FindPetsByTagsInfiniteQueryKey = ReturnType<typeof findPetsByTagsInf
 export function findPetsByTagsInfiniteQueryOptions(
   { query }: { query: MaybeRefOrGetter<FindPetsByTagsOptions['query']> },
   config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {},
-) {
+): UndefinedInitialDataInfiniteOptions<
+  FindPetsByTagsStatus200,
+  ResponseErrorConfig<Error>,
+  InfiniteData<FindPetsByTagsStatus200>,
+  FindPetsByTagsInfiniteQueryKey,
+  NonNullable<FindPetsByTagsQuery['pageSize']>
+> & { queryKey: DataTag<FindPetsByTagsInfiniteQueryKey, InfiniteData<FindPetsByTagsStatus200>, ResponseErrorConfig<Error>> } {
   const queryKey = findPetsByTagsInfiniteQueryKey({ query })
   return infiniteQueryOptions<
     FindPetsByTagsStatus200,

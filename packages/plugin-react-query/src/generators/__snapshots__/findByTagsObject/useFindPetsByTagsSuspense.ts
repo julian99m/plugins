@@ -6,7 +6,7 @@
 
 import type { RequestConfig, ResponseErrorConfig } from './.kubb/client'
 import type { FindPetsByTagsOptions, FindPetsByTagsStatus200 } from './FindPetsByTags'
-import type { QueryKey, QueryClient, UseSuspenseQueryOptions, UseSuspenseQueryResult } from '@tanstack/react-query'
+import type { UndefinedInitialDataOptions, DataTag, QueryKey, QueryClient, UseSuspenseQueryOptions, UseSuspenseQueryResult } from '@tanstack/react-query'
 import { findPetsByTags } from './clients/findPetsByTags'
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 
@@ -18,9 +18,11 @@ type FindPetsByTagsSuspenseQueryKey = ReturnType<typeof findPetsByTagsSuspenseQu
 export function findPetsByTagsSuspenseQueryOptions(
   { query }: FindPetsByTagsOptions,
   config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {},
-) {
+): UndefinedInitialDataOptions<FindPetsByTagsStatus200, ResponseErrorConfig<Error>, FindPetsByTagsStatus200, FindPetsByTagsSuspenseQueryKey> & {
+  queryKey: DataTag<FindPetsByTagsSuspenseQueryKey, FindPetsByTagsStatus200, ResponseErrorConfig<Error>>
+} {
   const queryKey = findPetsByTagsSuspenseQueryKey({ query })
-  return queryOptions<FindPetsByTagsStatus200, ResponseErrorConfig<Error>, FindPetsByTagsStatus200, typeof queryKey>({
+  return queryOptions<FindPetsByTagsStatus200, ResponseErrorConfig<Error>, FindPetsByTagsStatus200, FindPetsByTagsSuspenseQueryKey>({
     queryKey,
     queryFn: async ({ signal }) => {
       const { data } = await findPetsByTags({ ...config, query, signal: config.signal ?? signal, throwOnError: true })
