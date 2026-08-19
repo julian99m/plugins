@@ -1,5 +1,42 @@
 # @kubb/plugin-redoc
 
+## 5.0.0
+
+### Major Changes
+
+- Depend on `kubb` instead of `@kubb/core` and `@kubb/renderer-jsx` directly. Every plugin's `peerDependencies` now list a single `kubb` entry. This matches the `kubb-labs/kubb` `5.0.0-beta.81` release, which adds `kubb/kit` and `kubb/jsx` subpaths that re-export the plugin authoring API (`kubb/kit` includes the `ast` namespace, so there's no separate `kubb/ast` subpath).
+  
+  If you install a plugin directly (rather than only through `kubb`), update its peer to `kubb` and drop any standalone `@kubb/core` or `@kubb/renderer-jsx` install:
+  
+  ```diff
+  - pnpm add @kubb/core @kubb/renderer-jsx
+  + pnpm add kubb
+  ```
+  
+  Custom generators and plugins that build on these packages' internals should follow the same
+  `@kubb/core` → `kubb/kit` and `@kubb/renderer-jsx` → `kubb/jsx` mapping. The `ast` namespace
+  (previously `@kubb/ast`) is reached as a named export off `kubb/kit` rather than its own subpath.
+  `@kubb/parser-ts` (used by `plugin-ts`) and `@kubb/adapter-oas` (used by `plugin-redoc`, and for
+  the `AdapterOas` type in `plugin-zod`) are unaffected and stay direct dependencies.
+
+- **Breaking:** Rename `defineAdapter` to `createAdapter` and `PluginManager` to `KubbDriver`. `definePlugin`, `defineGenerator`, and `defineConfig` are unchanged.
+  
+  | Before | After |
+  |---|---|
+  | `defineAdapter` | `createAdapter` |
+  | `PluginManager` | `KubbDriver` |
+  | `pluginManager` (context property) | `driver` |
+
+- **Breaking:** Minimum required Node.js version is now 22.
+
+### Minor Changes
+
+- Remove `plugin-oas` runtime dependency. The plugin now reads the OpenAPI document directly via `adapterOas.document`.
+
+### Patch Changes
+
+- [#640](https://github.com/kubb-labs/plugins/pull/640) [`22f1221`](https://github.com/kubb-labs/plugins/commit/22f122170dc2330e788d54e9c2278c03f867cfb8) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Drop the unused internal utils devDependency flagged by knip. None of these packages import from it, they use the shared internals package, `ast`, or their own `utils.ts` instead. Runtime behavior is unchanged.
+
 ## 4.36.1
 
 ### Patch Changes

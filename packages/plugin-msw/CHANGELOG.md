@@ -1,5 +1,107 @@
 # @kubb/plugin-msw
 
+## 5.0.0
+
+### Major Changes
+
+- Depend on `kubb` instead of `@kubb/core` and `@kubb/renderer-jsx` directly. Every plugin's `peerDependencies` now list a single `kubb` entry. This matches the `kubb-labs/kubb` `5.0.0-beta.81` release, which adds `kubb/kit` and `kubb/jsx` subpaths that re-export the plugin authoring API (`kubb/kit` includes the `ast` namespace, so there's no separate `kubb/ast` subpath).
+  
+  If you install a plugin directly (rather than only through `kubb`), update its peer to `kubb` and drop any standalone `@kubb/core` or `@kubb/renderer-jsx` install:
+  
+  ```diff
+  - pnpm add @kubb/core @kubb/renderer-jsx
+  + pnpm add kubb
+  ```
+  
+  Custom generators and plugins that build on these packages' internals should follow the same
+  `@kubb/core` → `kubb/kit` and `@kubb/renderer-jsx` → `kubb/jsx` mapping. The `ast` namespace
+  (previously `@kubb/ast`) is reached as a named export off `kubb/kit` rather than its own subpath.
+  `@kubb/parser-ts` (used by `plugin-ts`) and `@kubb/adapter-oas` (used by `plugin-redoc`, and for
+  the `AdapterOas` type in `plugin-zod`) are unaffected and stay direct dependencies.
+
+- Adopt the explicit `output.mode` option from `@kubb/core`.
+  
+  Kubb no longer infers a single file from an `output.path` ending in `.ts`. Set `output.mode: 'file'` to write everything into one file, `output.mode: 'group'` to write one file per group (which requires the `group` option), or leave it as the default `output.mode: 'directory'` for one file per operation or schema. A config that used a file-style `output.path` (e.g. `path: 'models.ts'`) now needs `output.mode: 'file'` to keep that layout.
+  
+  Each plugin's `Options` type now uses the `OutputOptions` union, so `output.mode: 'group'` statically requires the `group` option. The generators no longer gate imports on `ctx.getMode`, since `@kubb/ast` strips self-imports for the consolidated modes.
+
+- **Breaking:** Upgrade `@kubb/plugin-msw` to the v5 plugin architecture.
+  
+  - Remove the `@kubb/plugin-oas` and `@kubb/oas` runtime dependency from the plugin
+  - Move `contentType` filtering to `adapterOas(...)`
+  - Keep existing MSW options like `handlers`, `parser`, `baseURL`, `group`, `include`, `exclude`, and `override`
+  - Add `resolver` and `macros` options for v5 customization
+  - Export `resolverMsw` from `@kubb/plugin-msw`
+
+- Replace the `transformer` option with `macros`.
+  
+  Every plugin now takes `macros?: Array<ast.Macro>` instead of `transformer?: ast.Visitor`, and registers them with `ctx.setMacros` in `kubb:plugin:setup`. Macros are named and composable, so a list runs in order and a later macro sees the output of an earlier one. Move a single visitor into a macro by wrapping it: `macros: [{ name: 'my-macro', schema(node) { … } }]`.
+
+- **Breaking:** Remove `pluginKey` in favor of `pluginName`. Each plugin can now only be used once. Duplicate plugins throw an error.
+
+- **Breaking:** Rename `defineAdapter` to `createAdapter` and `PluginManager` to `KubbDriver`. `definePlugin`, `defineGenerator`, and `defineConfig` are unchanged.
+  
+  | Before | After |
+  |---|---|
+  | `defineAdapter` | `createAdapter` |
+  | `PluginManager` | `KubbDriver` |
+  | `pluginManager` (context property) | `driver` |
+
+- **Breaking:** Minimum required Node.js version is now 22.
+
+### Minor Changes
+
+- Default tag group folders to the plain camelCased tag.
+  
+  With `group: { type: 'tag' }`, every plugin now writes to `pet/` instead of `petController/` (and the Cypress and MCP plugins drop the `Requests` suffix too). The suffixes were a leftover convention nothing in the output referenced. To keep the old layout, pass `group: { type: 'tag', name: ({ group }) => \`${group}Controller\` }`.
+
+- Negotiate and discriminate multiple response content types.
+  
+  A generated call now takes a `contentType: { request, response }` object. The `request` key picks the body format and the `response` key sets the `Accept` header. Both default to what the spec declares and stay overridable, and a bare `contentType: 'application/json'` string still selects the request type, so existing calls keep working.
+  
+  When a status documents more than one content type, the result reports the type the server returned on `result.contentType`, next to `status` and `data`, so a caller can narrow `data` by it.
+  
+  ```ts
+  const result = await getPetById({ path: { petId: '1' }, contentType: { response: 'application/xml' } })
+  
+  if (result.status === 200) {
+    const { data, contentType } = result
+    switch (contentType) {
+      case 'application/json':
+        console.log('JSON pet:', data.name)
+        break
+      case 'application/xml':
+        console.log('XML pet:', data.id)
+        break
+    }
+  }
+  ```
+  
+  - `plugin-ts` discriminates a status that documents several content types by content type in the `<Name>Responses` record, so `result.contentType` narrows `result.data`. The standalone `<Name>StatusNNN` alias stays the plain body union, and the individual per-content-type variant types (`GetPetByIdStatus200Json`, `GetPetByIdStatus200Xml`) are kept.
+  - `plugin-fetch` and `plugin-axios` add a `codecs` map to `RequestConfig` and `ClientConfig`, keyed by content type and matched with the charset stripped, where each entry's `serialize` / `deserialize` handles a format the runtime does not decode itself, such as `application/xml`. The negotiated content type rides on `result.contentType` and on `ResponseError`.
+  - `plugin-react-query`, `plugin-vue-query`, and `plugin-swr` thread the `contentType` option through as the `{ request?, response? }` object.
+  - `plugin-zod` and `plugin-faker` emit one schema or mock per response content type plus a union alias, with variant names that line up across the plugins through the shared naming helpers.
+  - `plugin-msw` prefers the `application/json` content type for the mocked response when a status declares several.
+  
+  Single-content-type operations generate the same output as before. The breaking change is that the result now carries `contentType`, and the per-status responses record shape changes for a status with several content types.
+
+### Patch Changes
+
+- [#731](https://github.com/kubb-labs/plugins/pull/731) [`8bf93a5`](https://github.com/kubb-labs/plugins/commit/8bf93a5dd7728694c47cb142a35d073b69d770d9) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Cache a dependency plugin's resolved name and file per operation node, reported in kubb-labs/kubb#3813.
+  
+  A dependent used to call `driver.getResolver(dep)` and re-resolve the dependency's name and path for every node. `plugin-react-query`'s query, mutation, and infinite-query generators each recomputed `plugin-ts`'s and the contract client's file for the same operation, and `plugin-swr`, `plugin-vue-query`, `plugin-mcp`, `plugin-msw`, `plugin-faker`, and `plugin-cypress` each recomputed `plugin-ts`'s file independently.
+  
+  `resolveClientOperation` and the new `resolveDependencyOperationFile` helper now read and write the current node's shared cache (`ctx.cache`, from kubb-labs/kubb#3812), so the first plugin that resolves a dependency for a node computes it once and every other plugin generating from that same node reuses the result. The contract client's own generator (`plugin-fetch`/`plugin-axios`) populates the cache first, so its dependents usually hit it directly. Generated output is unchanged.
+
+- [#692](https://github.com/kubb-labs/plugins/pull/692) [`3d6f94b`](https://github.com/kubb-labs/plugins/commit/3d6f94b08174be0f39175bd6f641bea00c9459b0) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Consume the `Url` path-template helper from `kubb/kit` instead of a locally duplicated copy, now that kubb core exposes `Url.toSafeTemplate` and `Url.toGroupedTemplateString` alongside its existing `toPath`/`toTemplateString`/`toObject`. Requires `kubb`/`@kubb/kit` 5.0.0-beta.98 or later.
+
+- [#241](https://github.com/kubb-labs/plugins/pull/241) [`7bf4c87`](https://github.com/kubb-labs/plugins/commit/7bf4c87304143708f7c7619b4af5013f40fb81cf) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Replace the per-plugin `group` naming block (duplicated verbatim across nine plugins) with a shared `createGroupConfig` helper. A user-provided `group.name` is still honored across every plugin. The default folder name is covered by the separate group-folder changeset.
+
+- Fix typed request body in generated MSW handler callbacks. When an operation has a request body, the generated handler now passes the request body type as a generic to `http.<method>`, so `info.request.json()` returns the typed payload without requiring a manual cast.
+- Updated dependencies [[`8bf93a5`](https://github.com/kubb-labs/plugins/commit/8bf93a5dd7728694c47cb142a35d073b69d770d9), [`92482b1`](https://github.com/kubb-labs/plugins/commit/92482b1ee0a0b70c2bc0293f5d3d8dbd5519af75), [`451f3b7`](https://github.com/kubb-labs/plugins/commit/451f3b7a24eb95fb4881bee8de59839e81686386), [`7bf4c87`](https://github.com/kubb-labs/plugins/commit/7bf4c87304143708f7c7619b4af5013f40fb81cf)]:
+  - @kubb/plugin-faker@5.0.0
+  - @kubb/plugin-ts@5.0.0
+
 ## 4.36.1
 
 ### Patch Changes

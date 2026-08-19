@@ -1,5 +1,150 @@
 # @kubb/plugin-zod
 
+## 5.0.0
+
+### Major Changes
+
+- Depend on `kubb` instead of `@kubb/core` and `@kubb/renderer-jsx` directly. Every plugin's `peerDependencies` now list a single `kubb` entry. This matches the `kubb-labs/kubb` `5.0.0-beta.81` release, which adds `kubb/kit` and `kubb/jsx` subpaths that re-export the plugin authoring API (`kubb/kit` includes the `ast` namespace, so there's no separate `kubb/ast` subpath).
+  
+  If you install a plugin directly (rather than only through `kubb`), update its peer to `kubb` and drop any standalone `@kubb/core` or `@kubb/renderer-jsx` install:
+  
+  ```diff
+  - pnpm add @kubb/core @kubb/renderer-jsx
+  + pnpm add kubb
+  ```
+  
+  Custom generators and plugins that build on these packages' internals should follow the same
+  `@kubb/core` → `kubb/kit` and `@kubb/renderer-jsx` → `kubb/jsx` mapping. The `ast` namespace
+  (previously `@kubb/ast`) is reached as a named export off `kubb/kit` rather than its own subpath.
+  `@kubb/parser-ts` (used by `plugin-ts`) and `@kubb/adapter-oas` (used by `plugin-redoc`, and for
+  the `AdapterOas` type in `plugin-zod`) are unaffected and stay direct dependencies.
+
+- Adopt the explicit `output.mode` option from `@kubb/core`.
+  
+  Kubb no longer infers a single file from an `output.path` ending in `.ts`. Set `output.mode: 'file'` to write everything into one file, `output.mode: 'group'` to write one file per group (which requires the `group` option), or leave it as the default `output.mode: 'directory'` for one file per operation or schema. A config that used a file-style `output.path` (e.g. `path: 'models.ts'`) now needs `output.mode: 'file'` to keep that layout.
+  
+  Each plugin's `Options` type now uses the `OutputOptions` union, so `output.mode: 'group'` statically requires the `group` option. The generators no longer gate imports on `ctx.getMode`, since `@kubb/ast` strips self-imports for the consolidated modes.
+
+- Rewrite to v5 AST-based architecture. The plugin no longer depends on `@kubb/plugin-oas` or `@kubb/oas`.
+  
+  **Breaking changes:**
+  - Remove `mapper`, `version`, `contentType` options
+  - Remove `transformers.name` and `transformers.schema` callbacks
+  - Move `integerType`, `emptySchemaType`, `unknownType` to `adapterOas(...)`
+  - Remove the `wrapOutput` option. Use a `printer.nodes` override and call `this.base(node)` to wrap the built-in output instead
+  - `coercion` accepts granular object `{ dates?, strings?, numbers? }` in addition to `boolean`
+  
+  **New options:**
+  - `resolver`, `printer`, `macros`
+  
+  **New exports:** `resolverZod`, `printerZod`, `printerZodMini`
+
+- Replace the `transformer` option with `macros`.
+  
+  Every plugin now takes `macros?: Array<ast.Macro>` instead of `transformer?: ast.Visitor`, and registers them with `ctx.setMacros` in `kubb:plugin:setup`. Macros are named and composable, so a list runs in order and a later macro sees the output of an earlier one. Move a single visitor into a macro by wrapping it: `macros: [{ name: 'my-macro', schema(node) { … } }]`.
+
+- **Breaking:** Remove `pluginKey` in favor of `pluginName`. Each plugin can now only be used once. Duplicate plugins throw an error.
+
+- **Breaking:** Rename `defineAdapter` to `createAdapter` and `PluginManager` to `KubbDriver`. `definePlugin`, `defineGenerator`, and `defineConfig` are unchanged.
+  
+  | Before | After |
+  |---|---|
+  | `defineAdapter` | `createAdapter` |
+  | `PluginManager` | `KubbDriver` |
+  | `pluginManager` (context property) | `driver` |
+
+- **Breaking:** Minimum required Node.js version is now 22.
+
+### Minor Changes
+
+- Fix stack overflows on indirect circular schemas (e.g. `Dog → Pet → Dog`) reported in kubb-labs/kubb#3172.
+  
+  Both plugins now use shared helpers from `@kubb/ast`:
+  - `findCircularSchemas(schemas)`: detects all schemas involved in a cycle (direct or indirect)
+  - `containsCircularRef(node, { circularSchemas, excludeName? })`: checks whether a property transitively references a cyclic schema
+  
+  `plugin-faker` emits a lazy, memoizing getter for properties that reference an indirect cycle, preventing stack overflows at construction time. Direct self-references continue to emit `undefined as unknown as <Type>`.
+  
+  `plugin-zod` wraps cyclic `$ref`s in `z.lazy(() => …)` and emits object properties as getters when the property schema references a cyclic schema. The getter body is generated without redundant `z.lazy()` wrappers, using a closure-level flag instead of post-processing string replacement.
+
+- Default tag group folders to the plain camelCased tag.
+  
+  With `group: { type: 'tag' }`, every plugin now writes to `pet/` instead of `petController/` (and the Cypress and MCP plugins drop the `Requests` suffix too). The suffixes were a leftover convention nothing in the output referenced. To keep the old layout, pass `group: { type: 'tag', name: ({ group }) => \`${group}Controller\` }`.
+
+- Every client now takes one grouped `{ path, query, body, headers }` options object, matching `@kubb/plugin-fetch`. This replaces the old per-argument signatures, the `params`/`data` keys, and the three options that produced them.
+  
+  Removed `paramsType`, `pathParamsType`, and `paramsCasing` from `@kubb/plugin-client`, `@kubb/plugin-react-query`, `@kubb/plugin-vue-query`, `@kubb/plugin-swr`, and `@kubb/plugin-cypress`. Removed `paramsCasing` from `@kubb/plugin-ts`, `@kubb/plugin-zod`, `@kubb/plugin-faker`, and `@kubb/plugin-mcp`.
+  
+  Generated functions, class methods, SDK methods, and query hooks now take the grouped object typed from the operation's `XxxRequestConfig`. Each `path`, `query`, and `headers` group is required when the operation has a required parameter in that group, so callers get a compile-time error before sending an incomplete request.
+  
+  The axios and fetch runtimes rename their `RequestConfig` fields `data` to `body`, and add `query` alongside the existing `params` (`query` wins when both are set, and is mapped to axios's native `params` field internally). Update any custom client or low-level `client({ ... })` call to the new field names.
+  
+  Update call sites to the grouped object, for example `getPet({ path: { petId } })`, `addPet({ body })`, and `useFindPetsByStatus({ query: { status } })`.
+
+- Negotiate and discriminate multiple response content types.
+  
+  A generated call now takes a `contentType: { request, response }` object. The `request` key picks the body format and the `response` key sets the `Accept` header. Both default to what the spec declares and stay overridable, and a bare `contentType: 'application/json'` string still selects the request type, so existing calls keep working.
+  
+  When a status documents more than one content type, the result reports the type the server returned on `result.contentType`, next to `status` and `data`, so a caller can narrow `data` by it.
+  
+  ```ts
+  const result = await getPetById({ path: { petId: '1' }, contentType: { response: 'application/xml' } })
+  
+  if (result.status === 200) {
+    const { data, contentType } = result
+    switch (contentType) {
+      case 'application/json':
+        console.log('JSON pet:', data.name)
+        break
+      case 'application/xml':
+        console.log('XML pet:', data.id)
+        break
+    }
+  }
+  ```
+  
+  - `plugin-ts` discriminates a status that documents several content types by content type in the `<Name>Responses` record, so `result.contentType` narrows `result.data`. The standalone `<Name>StatusNNN` alias stays the plain body union, and the individual per-content-type variant types (`GetPetByIdStatus200Json`, `GetPetByIdStatus200Xml`) are kept.
+  - `plugin-fetch` and `plugin-axios` add a `codecs` map to `RequestConfig` and `ClientConfig`, keyed by content type and matched with the charset stripped, where each entry's `serialize` / `deserialize` handles a format the runtime does not decode itself, such as `application/xml`. The negotiated content type rides on `result.contentType` and on `ResponseError`.
+  - `plugin-react-query`, `plugin-vue-query`, and `plugin-swr` thread the `contentType` option through as the `{ request?, response? }` object.
+  - `plugin-zod` and `plugin-faker` emit one schema or mock per response content type plus a union alias, with variant names that line up across the plugins through the shared naming helpers.
+  - `plugin-msw` prefers the `application/json` content type for the mocked response when a status declares several.
+  
+  Single-content-type operations generate the same output as before. The breaking change is that the result now carries `contentType`, and the per-status responses record shape changes for a status with several content types.
+
+- Emit `z.discriminatedUnion` for `oneOf`/`anyOf` schemas with a `discriminator` (kubb-labs/plugins#335).
+  
+  Variants defined through `allOf` used to render as intersections (`base.and(…)`), which `z.discriminatedUnion` rejects, so the output fell back to a plain `z.union`. Object `allOf` variants now render with `.extend({ … })` (zod) or `z.extend(base, { … })` (zod/mini), so each stays a Zod object and the union discriminates on the property. Variants that can't flatten to an object, like a cyclic `z.lazy(…)` ref, keep the `z.union` fallback.
+
+- Fix `<operation>ResponseSchema` validating the response body against a union of every status code. The schema now covers success (2xx) bodies only, matching the `request<…>` generic that already separates success from error. Multiple 2xx responses produce a union of just those success schemas, and an operation with no documented 2xx schema falls back to `z.unknown()`. Error (4xx/5xx/default) bodies are no longer folded into the success schema. They stay typed by plugin-ts and are surfaced unparsed.
+  
+  This is the response-validation half of the client plugins' `validator: 'zod'` contract (plugin-fetch, plugin-axios). Fixes [#369](https://github.com/kubb-labs/plugins/issues/369).
+
+- Keep the OpenAPI document's exact parameter names for path, query, and header parameters, instead of forcing them to camelCase (kubb-labs/plugins#631).
+  
+  ```ts
+  export type UpdatePetQuery = {
+    include_deleted?: boolean
+  }
+  
+  updatePet({ path: { pet_id: '1' }, query: { include_deleted: true } })
+  ```
+  
+  There's no remapping step anymore, so a query or header name can't collide with a differently cased sibling, like `start_date` next to `startDate`.
+  
+  A path parameter still falls back to camelCase when its spec name isn't a valid identifier on its own (a hyphenated segment, say), since a few generators bind it directly as a variable. Query and header names are never touched.
+
+### Patch Changes
+
+- [#323](https://github.com/kubb-labs/plugins/pull/323) [`92482b1`](https://github.com/kubb-labs/plugins/commit/92482b1ee0a0b70c2bc0293f5d3d8dbd5519af75) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Consume the shared codegen helpers (`stringify`, `trimQuotes`, `jsStringEscape`, `toRegExpString`,
+  `stringifyObject`, `getNestedAccessor`, `buildJSDoc`) from `@kubb/ast/utils` instead of keeping
+  local copies. Generated output is unchanged.
+
+- [#414](https://github.com/kubb-labs/plugins/pull/414) [`451f3b7`](https://github.com/kubb-labs/plugins/commit/451f3b7a24eb95fb4881bee8de59839e81686386) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Consume shared schema-traversal helpers (`mapSchemaProperties`, `mapSchemaMembers`,
+  `mapSchemaItems`) in the zod, zod-mini, faker, and TypeScript printers,
+  replacing the per-printer property, member, and item walks. Generated output is unchanged.
+
+- [#241](https://github.com/kubb-labs/plugins/pull/241) [`7bf4c87`](https://github.com/kubb-labs/plugins/commit/7bf4c87304143708f7c7619b4af5013f40fb81cf) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Replace the per-plugin `group` naming block (duplicated verbatim across nine plugins) with a shared `createGroupConfig` helper. A user-provided `group.name` is still honored across every plugin. The default folder name is covered by the separate group-folder changeset.
+
 ## 4.36.1
 
 ### Patch Changes
