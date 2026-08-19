@@ -70,7 +70,8 @@
     "kubb": "catalog:"
   },
   "peerDependencies": {
-    "kubb": "catalog:"
+    "kubb": "catalog:",
+    "zod": "^4.0.0"
   },
   "engines": {
     "node": ">=22"

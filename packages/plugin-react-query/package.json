@@ -87,6 +87,7 @@
     "kubb": "catalog:"
   },
   "peerDependencies": {
+    "@tanstack/react-query": "^5.62.0",
     "kubb": "catalog:"
   },
   "engines": {

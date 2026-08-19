@@ -83,6 +83,7 @@
     "kubb": "catalog:"
   },
   "peerDependencies": {
+    "@faker-js/faker": "^9.0.0 || ^10.0.0",
     "kubb": "catalog:"
   },
   "engines": {
