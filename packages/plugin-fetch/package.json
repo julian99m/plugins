@@ -13,9 +13,9 @@
     "swagger",
     "typescript"
   ],
+  "homepage": "https://kubb.dev/plugins/plugin-fetch",
   "license": "MIT",
   "author": "stijnvanhulle",
-  "homepage": "https://kubb.dev/plugins/plugin-fetch",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kubb-labs/plugins.git",

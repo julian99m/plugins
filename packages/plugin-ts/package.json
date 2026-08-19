@@ -13,9 +13,9 @@
     "types",
     "typescript"
   ],
+  "homepage": "https://kubb.dev/plugins/plugin-ts",
   "license": "MIT",
   "author": "stijnvanhulle",
-  "homepage": "https://kubb.dev/plugins/plugin-ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kubb-labs/plugins.git",

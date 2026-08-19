@@ -13,9 +13,9 @@
     "testing",
     "typescript"
   ],
+  "homepage": "https://kubb.dev/plugins/plugin-cypress",
   "license": "MIT",
   "author": "stijnvanhulle",
-  "homepage": "https://kubb.dev/plugins/plugin-cypress",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kubb-labs/plugins.git",
