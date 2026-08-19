@@ -13,9 +13,12 @@ export const logoutUserQueryKey = () => [{ url: '/user/logout' }] as const
 
 type LogoutUserQueryKey = ReturnType<typeof logoutUserQueryKey>
 
-export function logoutUserQueryOptions(
-  config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {},
-): UndefinedInitialDataOptions<LogoutUserResponse, ResponseErrorConfig<Error>, LogoutUserResponse, LogoutUserQueryKey> & {
+export function logoutUserQueryOptions(config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> = {}): UndefinedInitialDataOptions<
+  LogoutUserResponse,
+  ResponseErrorConfig<Error>,
+  LogoutUserResponse,
+  LogoutUserQueryKey
+> & {
   queryKey: DataTag<LogoutUserQueryKey, LogoutUserResponse, ResponseErrorConfig<Error>>
 } {
   const queryKey = logoutUserQueryKey()
