@@ -21,9 +21,15 @@ type Props = {
 
 /**
  * The vue-query flavor of the shared `infiniteQueryOptions` component: request groups accept
- * `MaybeRefOrGetter` values, are unwrapped with `toValue(...)` in the client call, and the emitted
- * `TQueryKey` generic is the imported `QueryKey` type instead of `typeof queryKey`.
+ * `MaybeRefOrGetter` values and are unwrapped with `toValue(...)` in the client call.
+ *
+ * The emitted `TQueryKey` generic is the named query key type rather than the imported `QueryKey`,
+ * so the `infiniteQueryOptions` call and the declared return type agree on the key. Widening it to
+ * `QueryKey` makes the returned `DataTag<QueryKey, ...>` unassignable to the declared
+ * `DataTag<<name>QueryKey, ...>`.
  */
 export function InfiniteQueryOptions(props: Props): KubbReactNode {
-  return <BaseInfiniteQueryOptions {...props} queryKeyType="QueryKey" memberTypeWrapper={maybeRefOrGetter} unwrapName={(name) => `toValue(${name})`} />
+  return (
+    <BaseInfiniteQueryOptions {...props} queryKeyType={props.queryKeyTypeName} memberTypeWrapper={maybeRefOrGetter} unwrapName={(name) => `toValue(${name})`} />
+  )
 }

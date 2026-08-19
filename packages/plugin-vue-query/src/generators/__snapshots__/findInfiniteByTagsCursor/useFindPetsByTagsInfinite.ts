@@ -40,7 +40,7 @@ export function findPetsByTagsInfiniteQueryOptions(
     FindPetsByTagsStatus200,
     ResponseErrorConfig<Error>,
     InfiniteData<FindPetsByTagsStatus200>,
-    QueryKey,
+    FindPetsByTagsInfiniteQueryKey,
     NonNullable<FindPetsByTagsQuery['pageSize']>
   >({
     queryKey,
