@@ -68,14 +68,16 @@ jobs:
         env:
           NPM_CONFIG_PROVENANCE: true
         # Stamp each package to a unique canary version so it can't collide
-        # with the `latest` tag, then rebuild and publish.
+        # with the `latest` tag, then rebuild and publish. --no-git-checks is
+        # required: the first bump dirties the tree, which would make pnpm
+        # version refuse for every package after it.
         run: |
           pnpm -r exec bash -c '
-            pnpm --no-git-tag-version version minor
+            pnpm --no-git-tag-version version minor --no-git-checks
             version=$(node -p "require(\"./package.json\").version")
             canary_version="${version}-canary.$(date +%Y%m%dT%H%M%S)"
             echo "Version that will be published: ${canary_version}"
-            pnpm --no-git-tag-version version "${canary_version}" --allow-same-version
+            pnpm --no-git-tag-version version "${canary_version}" --allow-same-version --no-git-checks
           '
           pnpm run build
           pnpm exec changeset publish --tag canary
