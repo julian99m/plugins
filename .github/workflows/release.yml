@@ -61,8 +61,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       # Canary skips staging on purpose, so it stays automatic on every push.
-      # If the npm Trusted Publisher for these packages is ever locked to
-      # stage-only, this step will need its own non-stage-restricted entry.
       - name: Publish canary
         if: ${{ steps.release.outputs.staged != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         continue-on-error: true
@@ -106,11 +104,8 @@ jobs:
           node-version: '22.22.3'
           cache: 'false'
 
-      # Every staged package gets its own release here, since packages in
-      # this repo version and changelog independently (see the empty `fixed`
-      # and `linked` groups in .changeset/config.json) — unlike kubb-labs/kubb,
-      # where every package shares one fixed version and one combined release,
-      # so this omits release-mode (defaults to per-package).
+      # Packages here version independently, so release-mode is omitted and
+      # defaults to per-package.
       - name: Promote
         id: promote
         uses: kubb-labs/config/.github/actions/promote@909a85919614def70d99dff599c943f1c5755975 # main
