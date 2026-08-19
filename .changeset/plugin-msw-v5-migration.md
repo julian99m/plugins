@@ -6,6 +6,6 @@
 
 - Remove the `@kubb/plugin-oas` and `@kubb/oas` runtime dependency from the plugin
 - Move `contentType` filtering to `adapterOas(...)`
-- Keep existing MSW options like `handlers`, `parser`, `baseURL`, `group`, `include`, `exclude`, `override`, and `transformers.name`
-- Add `resolver`, `transformer`, and `generators` options for v5 customization
+- Keep existing MSW options like `handlers`, `parser`, `baseURL`, `group`, `include`, `exclude`, and `override`
+- Add `resolver` and `macros` options for v5 customization
 - Export `resolverMsw` from `@kubb/plugin-msw`

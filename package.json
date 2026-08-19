@@ -2,7 +2,7 @@
   "name": "@kubb/plugins",
   "version": "0.0.0",
   "private": true,
-  "description": "Kubb's monorepo",
+  "description": "Kubb's monorepo for plugins",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
@@ -64,6 +64,6 @@
     "node": ">=22",
     "pnpm": ">=11.0.0"
   },
-  "packageManager": "pnpm@11.20.0",
+  "packageManager": "pnpm@11.22.0",
   "namespace": "@kubb"
 }

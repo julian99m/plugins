@@ -1,5 +1,5 @@
 ---
-"@kubb/plugin-zod": minor
+"@kubb/plugin-zod": major
 ---
 
 Rewrite to v5 AST-based architecture. The plugin no longer depends on `@kubb/plugin-oas` or `@kubb/oas`.
@@ -8,11 +8,10 @@ Rewrite to v5 AST-based architecture. The plugin no longer depends on `@kubb/plu
 - Remove `mapper`, `version`, `contentType` options
 - Remove `transformers.name` and `transformers.schema` callbacks
 - Move `integerType`, `emptySchemaType`, `unknownType` to `adapterOas(...)`
-- `wrapOutput` callback now receives `SchemaNode` instead of `SchemaObject`
+- Remove the `wrapOutput` option. Use a `printer.nodes` override and call `this.base(node)` to wrap the built-in output instead
 - `coercion` accepts granular object `{ dates?, strings?, numbers? }` in addition to `boolean`
 
 **New options:**
-- `paramsCasing?: 'camelcase'`
-- `resolver`, `transformer`, `printer`
+- `resolver`, `printer`, `macros`
 
-**New exports:** `resolverZod`, `resolverZodLegacy`, `printerZod`, `printerZodMini`
+**New exports:** `resolverZod`, `printerZod`, `printerZodMini`

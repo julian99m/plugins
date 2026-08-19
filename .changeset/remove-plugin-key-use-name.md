@@ -9,4 +9,4 @@
 "@kubb/plugin-mcp": major
 ---
 
-**Breaking:** Remove `pluginKey` in favour of `pluginName`. Each plugin can now only be used once; duplicate plugins throw an error.
+**Breaking:** Remove `pluginKey` in favor of `pluginName`. Each plugin can now only be used once. Duplicate plugins throw an error.

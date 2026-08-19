@@ -23,6 +23,6 @@ pluginAxios({})
 
 The query plugins (`plugin-react-query`, `plugin-vue-query`, `plugin-swr`) and `plugin-mcp` now read their bundled client runtime from `@kubb/plugin-axios` and `@kubb/plugin-fetch` instead of `@kubb/plugin-client`. Register one of those packages, or let the hooks emit their own inline contract client when none is registered.
 
-`plugin-axios` and `plugin-fetch` now export `axiosClientTemplatePath` and `fetchClientTemplatePath` so other plugins can inject the matching runtime.
+`plugin-axios` and `plugin-fetch` each copy their own client runtime template (`axiosClientTemplatePath` / `fetchClientTemplatePath` internally) into `.kubb/client.ts`; other plugins call the generated `<op>` functions through the shared client-resolution helpers instead of importing these paths themselves.
 
 Three `plugin-client` options have no equivalent and are dropped: `operations` (the `operations.ts` re-export file), `clientType: 'staticClass'`, and `importPath` for a custom client module. Use the `sdk` option on `plugin-axios` / `plugin-fetch` for class-based output.

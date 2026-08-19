@@ -17,4 +17,6 @@ pluginReactQuery({ output: { path: 'queries' } })
 pluginReactQuery({ output: { path: 'hooks' }, hooks: true })
 ```
 
-**Breaking change:** existing configs that rely on generated `use*` hooks must add `hooks: true`.
+`pluginReactQuery`'s `suspense` option also now defaults to `false` instead of `{}`, matching `infinite`'s existing off-by-default convention, so leaving `suspense` unset generates no suspense boilerplate.
+
+**Breaking change:** existing configs that rely on generated `use*` hooks must add `hooks: true`. A config that sets `suspense` or `infinite` while leaving `hooks` at its default no longer emits `<op>SuspenseQueryOptions`, `<op>SuspenseInfiniteQueryOptions`, or `<op>InfiniteQueryOptions` (and their query key exports). Set `hooks: true` to keep generating them, and pass `suspense: {}` explicitly to opt back into suspense query generation.
