@@ -15,6 +15,7 @@
     "use-swr",
     "use-swr-mutation"
   ],
+  "homepage": "https://kubb.dev/plugins/plugin-swr",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
@@ -22,6 +23,16 @@
     "url": "git+https://github.com/kubb-labs/plugins.git",
     "directory": "packages/plugin-swr"
   },
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/stijnvanhulle"
+    },
+    {
+      "type": "opencollective",
+      "url": "https://opencollective.com/kubb"
+    }
+  ],
   "files": [
     "dist",
     "!/**/**.test.**",

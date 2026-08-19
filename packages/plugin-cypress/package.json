@@ -13,6 +13,7 @@
     "testing",
     "typescript"
   ],
+  "homepage": "https://kubb.dev/plugins/plugin-cypress",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
@@ -20,6 +21,16 @@
     "url": "git+https://github.com/kubb-labs/plugins.git",
     "directory": "packages/plugin-cypress"
   },
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/stijnvanhulle"
+    },
+    {
+      "type": "opencollective",
+      "url": "https://opencollective.com/kubb"
+    }
+  ],
   "files": [
     "dist",
     "!/**/**.test.**",
