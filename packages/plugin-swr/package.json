@@ -85,8 +85,7 @@
     "kubb": "catalog:"
   },
   "peerDependencies": {
-    "kubb": "catalog:",
-    "swr": "^2.0.0"
+    "kubb": "catalog:"
   },
   "engines": {
     "node": ">=22"

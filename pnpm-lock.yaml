@@ -663,9 +663,6 @@ importers:
       '@kubb/plugin-ts':
         specifier: workspace:^
         version: link:../plugin-ts
-      cypress:
-        specifier: ^13.0.0 || ^14.0.0 || ^15.0.0
-        version: 15.20.1
     devDependencies:
       '@internals/shared':
         specifier: workspace:*
@@ -679,9 +676,6 @@ importers:
 
   packages/plugin-faker:
     dependencies:
-      '@faker-js/faker':
-        specifier: ^9.0.0 || ^10.0.0
-        version: 10.6.0
       '@kubb/plugin-ts':
         specifier: workspace:^
         version: link:../plugin-ts
@@ -726,9 +720,6 @@ importers:
       '@kubb/plugin-zod':
         specifier: workspace:^
         version: link:../plugin-zod
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.0.0
-        version: 1.30.0(supports-color@8.1.1)(zod@4.4.3)
     devDependencies:
       '@internals/client':
         specifier: workspace:*
@@ -751,9 +742,6 @@ importers:
       '@kubb/plugin-ts':
         specifier: workspace:^
         version: link:../plugin-ts
-      msw:
-        specifier: ^2.0.0
-        version: 2.15.0(@types/node@22.20.1)(typescript@6.0.3)
     devDependencies:
       '@internals/shared':
         specifier: workspace:*
@@ -770,9 +758,6 @@ importers:
       '@kubb/plugin-ts':
         specifier: workspace:^
         version: link:../plugin-ts
-      '@tanstack/react-query':
-        specifier: ^5.62.0
-        version: 5.101.4(react@19.2.8)
     devDependencies:
       '@internals/client':
         specifier: workspace:*
@@ -805,9 +790,6 @@ importers:
       '@kubb/plugin-ts':
         specifier: workspace:^
         version: link:../plugin-ts
-      swr:
-        specifier: ^2.0.0
-        version: 2.5.1(react@19.2.8)
     devDependencies:
       '@internals/client':
         specifier: workspace:*
@@ -849,9 +831,6 @@ importers:
       '@kubb/plugin-ts':
         specifier: workspace:^
         version: link:../plugin-ts
-      '@tanstack/vue-query':
-        specifier: ^5.62.0
-        version: 5.101.4(vue@3.5.41(typescript@6.0.3))
     devDependencies:
       '@internals/client':
         specifier: workspace:*
@@ -870,10 +849,6 @@ importers:
         version: 5.0.0(openapi-types@12.1.3)(rolldown@1.2.1)(typescript@6.0.3)(vite@8.1.0(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
 
   packages/plugin-zod:
-    dependencies:
-      zod:
-        specifier: ^4.0.0
-        version: 4.4.3
     devDependencies:
       '@internals/shared':
         specifier: workspace:*

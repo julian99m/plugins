@@ -74,7 +74,6 @@
     "kubb": "catalog:"
   },
   "peerDependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
     "kubb": "catalog:"
   },
   "engines": {
