@@ -16,6 +16,7 @@
   ],
   "license": "MIT",
   "author": "stijnvanhulle",
+  "homepage": "https://kubb.dev/plugins/plugin-mcp",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kubb-labs/plugins.git",
