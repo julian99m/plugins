@@ -145,9 +145,8 @@ const configs: Array<{ name: string; config: BuildConfig }> = [
     },
   },
   // ─── codecs ────────────────────────────────────────────────────────────
-  // A registered codec must reach a `$ref` request body. petStore's `placeOrder` takes an
-  // `Order` by `$ref`, and `Order.shipDate` is a `datetime`, so the body has to resolve to
-  // `orderInputSchema` (encode) while the response keeps `orderSchema` (decode).
+  // `placeOrder` takes an `Order` by `$ref` and `Order.shipDate` is a `datetime`, so the body has
+  // to resolve to `orderInputSchema` (encode) while the response keeps `orderSchema` (decode).
   {
     name: 'customCodec',
     config: {

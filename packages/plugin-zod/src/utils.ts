@@ -15,24 +15,7 @@ export function shouldCoerce(coercion: PluginZod['resolvedOptions']['coercion'] 
 /**
  * A codec for a schema node whose runtime type differs from its JSON wire type:
  * the output (response) schema decodes wire → runtime, and the input (request)
- * variant encodes runtime → wire.
- *
- * Register one through `pluginZod({ codecs })` to give a domain type both directions,
- * including through a `$ref`. Registering a codec is what tells the generator the
- * schema carries a conversion, which a `printer.nodes` handler alone cannot do.
- *
- * @example A `time` field carried as an ISO string but modeled as a Temporal.PlainTime
- * ```ts
- * pluginZod({
- *   codecs: [
- *     {
- *       matches: (node) => node.type === 'time',
- *       decode: () => 'z.iso.time().transform((value) => Temporal.PlainTime.from(value))',
- *       encode: () => 'z.instanceof(Temporal.PlainTime).transform((value) => value.toString())',
- *     },
- *   ],
- * })
- * ```
+ * variant encodes runtime → wire. Register one through `pluginZod({ codecs })`.
  */
 export type Codec = {
   /**
@@ -66,9 +49,6 @@ const dateCodec: Codec = {
   },
 }
 
-/**
- * Codecs shipped with the plugin, checked after any the user registers.
- */
 const builtInCodecs: Array<Codec> = [dateCodec]
 
 /**

@@ -210,9 +210,9 @@ function buildZodObjectShape(ctx: ZodPrinterContext, node: ast.SchemaNode): stri
 type CodecHandlerContext = { options: PrinterZodOptions }
 
 /**
- * Wraps every node handler so a registered codec prints the node instead, using its `encode` side in
- * the input direction and `decode` in the output one. Only user codecs are consulted here. The
- * built-in date codec stays inside the `date` handler, which layers `coercion` on top of it.
+ * Wraps every node handler so a registered codec prints the node instead, `encode` in the input
+ * direction and `decode` in the output one. Only user codecs are consulted: the built-in date codec
+ * stays inside the `date` handler, which layers `coercion` on top of it.
  */
 function applyCodecs<TNodes extends Record<string, unknown>>({ nodes, codecs }: { nodes: TNodes; codecs?: Array<Codec> }): TNodes {
   if (!codecs?.length) return nodes

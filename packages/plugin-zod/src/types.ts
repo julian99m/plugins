@@ -208,13 +208,12 @@ export type Options = OutputOptions & {
    */
   resolver?: ResolverPatch<ResolverZod>
   /**
-   * Register a conversion for a schema node whose runtime type differs from its wire type, such as
-   * a `time` field carried as an ISO string but modeled as a `Temporal.PlainTime`. Responses print
-   * the `decode` side and request bodies the `encode` side, including through a `$ref`.
+   * Register a two-way conversion for a schema node whose runtime type differs from its wire type,
+   * such as a `time` field carried as an ISO string but modeled as a `Temporal.PlainTime`.
+   * Responses print `decode` and request bodies print `encode`, including through a `$ref`.
    *
-   * Prefer this over a `printer.nodes` handler for a two-way conversion. A node handler only
-   * changes how a node prints, so the generator never learns the schema carries a conversion and a
-   * `$ref` request body keeps the decode direction.
+   * Prefer this over a `printer.nodes` handler whenever the two directions differ: a node handler
+   * only changes how a node prints, so no encode variant is emitted.
    *
    * Checked before the built-in date codec, so registering one for `date` replaces it.
    */
