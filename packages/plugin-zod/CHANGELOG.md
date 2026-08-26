@@ -1,5 +1,24 @@
 # @kubb/plugin-zod
 
+## 5.1.0
+
+### Minor Changes
+
+- [#789](https://github.com/kubb-labs/plugins/pull/789) [`86eb5b4`](https://github.com/kubb-labs/plugins/commit/86eb5b4289f8b8857850e76b00d698ef644f4015) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Source operation types from `pluginZod({ inferred: true })` when `pluginTs` is not in the pipeline. `pluginFetch` and `pluginAxios` previously generated nothing for an operation without `pluginTs`, since both generators looked up its `Options` and `Responses` types unconditionally. They now fall back to the zod plugin's inferred types, so a client built on zod codecs is typed by what the codecs decode to (a `Temporal` instance, a `Date`) instead of the raw wire type:
+  
+  ```ts
+  export default defineConfig({
+    input: './petStore.yaml',
+    output: { path: './src/gen' },
+    plugins: [
+      pluginZod({ inferred: true, output: { path: 'schemas', mode: 'directory' } }),
+      pluginFetch({ validator: 'zod', output: { path: 'fetcher.ts' } }),
+    ],
+  })
+  ```
+  
+  `pluginTs` still wins whenever it is present, so existing configs generate the same types as before. To support this, `pluginZod({ inferred: true })` now also emits the per-status `<operation>ResponsesSchema` and its inferred type, alongside the `<operation>OptionsSchema` it already emitted. Both are built from the same shared schemas as the `plugin-ts` equivalents, so the two paths stay in lockstep.
+
 ## 5.0.0
 
 ### Major Changes
