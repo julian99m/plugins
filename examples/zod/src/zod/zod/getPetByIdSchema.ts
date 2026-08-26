@@ -52,3 +52,20 @@ export const getPetByIdOptionsSchema = z.object({
 })
 
 export type GetPetByIdOptionsSchemaType = z.infer<typeof getPetByIdOptionsSchema>
+
+export const getPetByIdResponsesSchema = z.object({
+  '200': z.union([
+    z.object({
+      contentType: z.enum(['application/json']),
+      data: getPetByIdStatus200SchemaJson,
+    }),
+    z.object({
+      contentType: z.enum(['application/xml']),
+      data: getPetByIdStatus200SchemaXml,
+    }),
+  ]),
+  '400': getPetByIdStatus400Schema,
+  '404': getPetByIdStatus404Schema,
+})
+
+export type GetPetByIdResponsesSchemaType = z.infer<typeof getPetByIdResponsesSchema>

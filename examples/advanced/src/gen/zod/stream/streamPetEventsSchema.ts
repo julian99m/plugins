@@ -27,3 +27,9 @@ export const streamPetEventsOptionsSchema = z.object({
 })
 
 export type StreamPetEventsOptionsSchemaType = z.infer<typeof streamPetEventsOptionsSchema>
+
+export const streamPetEventsResponsesSchema = z.object({
+  '200': streamPetEventsStatus200Schema,
+})
+
+export type StreamPetEventsResponsesSchemaType = z.infer<typeof streamPetEventsResponsesSchema>

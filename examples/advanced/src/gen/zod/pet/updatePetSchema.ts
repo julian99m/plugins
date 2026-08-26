@@ -66,3 +66,22 @@ export const updatePetOptionsSchema = z.object({
 })
 
 export type UpdatePetOptionsSchemaType = z.infer<typeof updatePetOptionsSchema>
+
+export const updatePetResponsesSchema = z.object({
+  '200': z.union([
+    z.object({
+      contentType: z.enum(['application/json']),
+      data: updatePetStatus200SchemaJson,
+    }),
+    z.object({
+      contentType: z.enum(['application/xml']),
+      data: updatePetStatus200SchemaXml,
+    }),
+  ]),
+  '202': updatePetStatus202Schema,
+  '400': updatePetStatus400Schema,
+  '404': updatePetStatus404Schema,
+  '405': updatePetStatus405Schema,
+})
+
+export type UpdatePetResponsesSchemaType = z.infer<typeof updatePetResponsesSchema>

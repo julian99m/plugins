@@ -69,3 +69,10 @@ export const createPetsOptionsSchema = z.object({
 })
 
 export type CreatePetsOptionsSchemaType = z.infer<typeof createPetsOptionsSchema>
+
+export const createPetsResponsesSchema = z.object({
+  '201': createPetsStatus201Schema,
+  default: createPetsStatusDefaultSchema,
+})
+
+export type CreatePetsResponsesSchemaType = z.infer<typeof createPetsResponsesSchema>

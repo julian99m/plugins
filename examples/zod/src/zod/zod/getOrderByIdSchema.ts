@@ -52,3 +52,20 @@ export const getOrderByIdOptionsSchema = z.object({
 })
 
 export type GetOrderByIdOptionsSchemaType = z.infer<typeof getOrderByIdOptionsSchema>
+
+export const getOrderByIdResponsesSchema = z.object({
+  '200': z.union([
+    z.object({
+      contentType: z.enum(['application/json']),
+      data: getOrderByIdStatus200SchemaJson,
+    }),
+    z.object({
+      contentType: z.enum(['application/xml']),
+      data: getOrderByIdStatus200SchemaXml,
+    }),
+  ]),
+  '400': getOrderByIdStatus400Schema,
+  '404': getOrderByIdStatus404Schema,
+})
+
+export type GetOrderByIdResponsesSchemaType = z.infer<typeof getOrderByIdResponsesSchema>
