@@ -189,7 +189,7 @@ describe('buildOperationComments', () => {
     expect(buildOperationComments(node, { link: 'urlPath', linkPosition: 'beforeDeprecated', splitLines: true })).toStrictEqual([
       '@description Show pet',
       'details',
-      '{@link /pets/:pet-id}',
+      '{@link /pets/:petId}',
       '@deprecated',
     ])
   })
