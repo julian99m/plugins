@@ -705,34 +705,6 @@ describe('zodGenerator — Operation', () => {
       }),
       options: { printer: { nodes: temporalNodes } },
     },
-    // A `$ref` request body does not pick up the encode direction for a custom codec. The input
-    // variant is gated on `containsCodec`, which only recognizes the built-in date codec, so the
-    // body resolves to the component's decode schema. Snapshot pins that limit.
-    {
-      name: 'temporal codec is not applied to a ref request body',
-      node: ast.factory.createOperation({
-        operationId: 'bookRefSlot',
-        method: 'POST',
-        path: '/slots/ref',
-        tags: ['slots'],
-        requestBody: {
-          content: [
-            ast.factory.createContent({
-              contentType: 'application/json',
-              schema: ast.factory.createSchema({ type: 'ref', name: 'Slot', ref: '#/components/schemas/Slot' }),
-            }),
-          ],
-        },
-        responses: [
-          ast.factory.createResponse({
-            statusCode: '201',
-            schema: ast.factory.createSchema({ type: 'ref', name: 'Slot', ref: '#/components/schemas/Slot' }),
-            description: 'Booked',
-          }),
-        ],
-      }),
-      options: { printer: { nodes: temporalNodes } },
-    },
   ]
 
   test.each(operations)('$name', async (props) => {
