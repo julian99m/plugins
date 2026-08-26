@@ -11,12 +11,11 @@ import { resolverZod } from '../resolvers/resolverZod.ts'
 import type { PluginZod } from '../types.ts'
 import { zodGenerator } from './zodGenerator.tsx'
 
-// A custom codec type reaches both directions from one handler: `direction` is `'input'` for
-// request bodies and `'output'` for responses. Annotated as `PrinterZodNodes` because the `nodes`
-// option also accepts the Zod Mini shape, which has no `direction`.
-// `format: 'time'` parses to a `time` node, not a `string` node carrying a format. Decoding starts
-// from `z.iso.time()` so a malformed value fails as a validation issue instead of a RangeError
-// thrown inside the transform.
+// One handler covers both directions. `direction` is `'input'` for request bodies and `'output'`
+// for responses. `format: 'time'` parses to a `time` node, so keying on `string` would never fire.
+// Decoding starts from `z.iso.time()` so a malformed value fails as a validation issue rather than
+// a RangeError thrown inside the transform. Annotated because `nodes` also accepts the Zod Mini
+// shape, which has no `direction`.
 const temporalNodes: PrinterZodNodes = {
   time() {
     return this.options.direction === 'input'
@@ -662,9 +661,8 @@ describe('zodGenerator — Operation', () => {
       }),
       options: { coercion: true },
     },
-    // A direction-aware `printer.nodes` handler is how a custom codec type (a `time` field carried
-    // as an ISO string but modeled as a Temporal.PlainTime) reaches both directions: the request
-    // body gets the encode form, the response the decode form. Both stay plain Zod schemas, so
+    // A `time` field travels as an ISO string but is a Temporal.PlainTime in application code. The
+    // request body gets the encode form and the response the decode form, both plain Zod, so
     // `~standard.validate` runs the right direction on each without the client knowing about codecs.
     {
       name: 'temporal codec via direction-aware printer node',
@@ -707,9 +705,9 @@ describe('zodGenerator — Operation', () => {
       }),
       options: { printer: { nodes: temporalNodes } },
     },
-    // A `$ref` request body does NOT pick up the encode direction for a custom codec. The input
+    // A `$ref` request body does not pick up the encode direction for a custom codec. The input
     // variant is gated on `containsCodec`, which only recognizes the built-in date codec, so the
-    // body resolves to the component's output (decode) schema. Snapshot records that limitation.
+    // body resolves to the component's decode schema. Snapshot pins that limit.
     {
       name: 'temporal codec is not applied to a ref request body',
       node: ast.factory.createOperation({
