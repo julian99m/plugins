@@ -6,9 +6,22 @@ import { ast, memoryStorage } from 'kubb/kit'
 import { createMockedAdapter, createMockedPlugin, createMockedPluginDriver, renderGeneratorOperation, renderGeneratorSchema } from 'kubb/kit/testing'
 import { describe, expect, test } from 'vitest'
 import { matchFiles, rawSources } from '#mocks'
+import type { PrinterZodNodes } from '../printers/printerZod.ts'
 import { resolverZod } from '../resolvers/resolverZod.ts'
 import type { PluginZod } from '../types.ts'
 import { zodGenerator } from './zodGenerator.tsx'
+
+// A custom codec type reaches both directions from one handler: `direction` is `'input'` for
+// request bodies and `'output'` for responses. Annotated as `PrinterZodNodes` because the `nodes`
+// option also accepts the Zod Mini shape, which has no `direction`.
+const temporalNodes: PrinterZodNodes = {
+  string(node) {
+    if (node.format !== 'time') return this.base(node)
+    return this.options.direction === 'input'
+      ? 'z.instanceof(Temporal.PlainTime).transform((value) => value.toString())'
+      : 'z.string().transform((value) => Temporal.PlainTime.from(value))'
+  },
+}
 
 const testConfig: Config = {
   root: '.',
@@ -686,18 +699,7 @@ describe('zodGenerator — Operation', () => {
           }),
         ],
       }),
-      options: {
-        printer: {
-          nodes: {
-            string(node) {
-              if (node.format !== 'time') return this.base(node)
-              return this.options.direction === 'input'
-                ? 'z.instanceof(Temporal.PlainTime).transform((value) => value.toString())'
-                : 'z.string().transform((value) => Temporal.PlainTime.from(value))'
-            },
-          },
-        },
-      },
+      options: { printer: { nodes: temporalNodes } },
     },
   ]
 
