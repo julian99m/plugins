@@ -21,3 +21,9 @@ export const getInventoryOptionsSchema = z.object({
 })
 
 export type GetInventoryOptionsSchemaType = z.infer<typeof getInventoryOptionsSchema>
+
+export const getInventoryResponsesSchema = z.object({
+  '200': getInventoryStatus200Schema,
+})
+
+export type GetInventoryResponsesSchemaType = z.infer<typeof getInventoryResponsesSchema>

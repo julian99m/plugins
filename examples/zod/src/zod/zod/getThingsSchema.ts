@@ -45,3 +45,10 @@ export const getThingsOptionsSchema = z.object({
 })
 
 export type GetThingsOptionsSchemaType = z.infer<typeof getThingsOptionsSchema>
+
+export const getThingsResponsesSchema = z.object({
+  '201': getThingsStatus201Schema,
+  default: getThingsStatusDefaultSchema,
+})
+
+export type GetThingsResponsesSchemaType = z.infer<typeof getThingsResponsesSchema>

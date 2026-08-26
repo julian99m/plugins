@@ -39,3 +39,10 @@ export const deleteOrderOptionsSchema = z.object({
 })
 
 export type DeleteOrderOptionsSchemaType = z.infer<typeof deleteOrderOptionsSchema>
+
+export const deleteOrderResponsesSchema = z.object({
+  '400': deleteOrderStatus400Schema,
+  '404': deleteOrderStatus404Schema,
+})
+
+export type DeleteOrderResponsesSchemaType = z.infer<typeof deleteOrderResponsesSchema>

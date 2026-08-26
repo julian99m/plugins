@@ -10,6 +10,7 @@ export type {
   CreatePetsQueryOffsetSchemaType,
   CreatePetsQuerySchemaType,
   CreatePetsResponseSchemaType,
+  CreatePetsResponsesSchemaType,
   CreatePetsStatus201SchemaType,
   CreatePetsStatusDefaultSchemaType,
 } from './createPetsSchema'
@@ -25,6 +26,7 @@ export {
   createPetsQueryOffsetSchema,
   createPetsQuerySchema,
   createPetsResponseSchema,
+  createPetsResponsesSchema,
   createPetsStatus201Schema,
   createPetsStatusDefaultSchema,
 } from './createPetsSchema'

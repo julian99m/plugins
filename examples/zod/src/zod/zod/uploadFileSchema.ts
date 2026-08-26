@@ -46,3 +46,9 @@ export const uploadFileOptionsSchema = z.object({
 })
 
 export type UploadFileOptionsSchemaType = z.infer<typeof uploadFileOptionsSchema>
+
+export const uploadFileResponsesSchema = z.object({
+  '200': uploadFileStatus200Schema,
+})
+
+export type UploadFileResponsesSchemaType = z.infer<typeof uploadFileResponsesSchema>
