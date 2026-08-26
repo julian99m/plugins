@@ -679,7 +679,11 @@ describe('zodGenerator — Operation', () => {
                 type: 'object',
                 primitive: 'object',
                 properties: [
-                  ast.factory.createProperty({ name: 'startsAt', required: true, schema: ast.factory.createSchema({ type: 'time', representation: 'string' }) }),
+                  ast.factory.createProperty({
+                    name: 'startsAt',
+                    required: true,
+                    schema: ast.factory.createSchema({ type: 'time', representation: 'string' }),
+                  }),
                 ],
               }),
             }),
