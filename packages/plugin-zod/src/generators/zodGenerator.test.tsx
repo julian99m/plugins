@@ -14,9 +14,9 @@ import { zodGenerator } from './zodGenerator.tsx'
 // A custom codec type reaches both directions from one handler: `direction` is `'input'` for
 // request bodies and `'output'` for responses. Annotated as `PrinterZodNodes` because the `nodes`
 // option also accepts the Zod Mini shape, which has no `direction`.
+// `format: 'time'` parses to a `time` node, not a `string` node carrying a format.
 const temporalNodes: PrinterZodNodes = {
-  string(node) {
-    if (node.format !== 'time') return this.base(node)
+  time() {
     return this.options.direction === 'input'
       ? 'z.instanceof(Temporal.PlainTime).transform((value) => value.toString())'
       : 'z.string().transform((value) => Temporal.PlainTime.from(value))'
@@ -679,7 +679,7 @@ describe('zodGenerator — Operation', () => {
                 type: 'object',
                 primitive: 'object',
                 properties: [
-                  ast.factory.createProperty({ name: 'startsAt', required: true, schema: ast.factory.createSchema({ type: 'string', format: 'time' }) }),
+                  ast.factory.createProperty({ name: 'startsAt', required: true, schema: ast.factory.createSchema({ type: 'time', representation: 'string' }) }),
                 ],
               }),
             }),
@@ -692,9 +692,37 @@ describe('zodGenerator — Operation', () => {
               type: 'object',
               primitive: 'object',
               properties: [
-                ast.factory.createProperty({ name: 'startsAt', required: true, schema: ast.factory.createSchema({ type: 'string', format: 'time' }) }),
+                ast.factory.createProperty({ name: 'startsAt', required: true, schema: ast.factory.createSchema({ type: 'time', representation: 'string' }) }),
               ],
             }),
+            description: 'Booked',
+          }),
+        ],
+      }),
+      options: { printer: { nodes: temporalNodes } },
+    },
+    // A `$ref` request body does NOT pick up the encode direction for a custom codec. The input
+    // variant is gated on `containsCodec`, which only recognizes the built-in date codec, so the
+    // body resolves to the component's output (decode) schema. Snapshot records that limitation.
+    {
+      name: 'temporal codec is not applied to a ref request body',
+      node: ast.factory.createOperation({
+        operationId: 'bookRefSlot',
+        method: 'POST',
+        path: '/slots/ref',
+        tags: ['slots'],
+        requestBody: {
+          content: [
+            ast.factory.createContent({
+              contentType: 'application/json',
+              schema: ast.factory.createSchema({ type: 'ref', name: 'Slot', ref: '#/components/schemas/Slot' }),
+            }),
+          ],
+        },
+        responses: [
+          ast.factory.createResponse({
+            statusCode: '201',
+            schema: ast.factory.createSchema({ type: 'ref', name: 'Slot', ref: '#/components/schemas/Slot' }),
             description: 'Booked',
           }),
         ],
