@@ -46,7 +46,6 @@ catalog:
 #  '@kubb/tui': link:../kubb/packages/tui
 #  kubb: link:../kubb/packages/kubb
 #  unplugin-kubb: link:../kubb/packages/unplugin-kubb
-#  unplugin-kubb: link:../kubb/packages/unplugin-kubb
 
 minimumReleaseAge: 2880 # 48 hours, matches CI's SAFE_CHAIN_MINIMUM_PACKAGE_AGE_HOURS
 minimumReleaseAgeExclude:
