@@ -647,6 +647,58 @@ describe('zodGenerator — Operation', () => {
       }),
       options: { coercion: true },
     },
+    // A direction-aware `printer.nodes` handler is how a custom codec type (a `time` field carried
+    // as an ISO string but modeled as a Temporal.PlainTime) reaches both directions: the request
+    // body gets the encode form, the response the decode form. Both stay plain Zod schemas, so
+    // `~standard.validate` runs the right direction on each without the client knowing about codecs.
+    {
+      name: 'temporal codec via direction-aware printer node',
+      node: ast.factory.createOperation({
+        operationId: 'bookSlot',
+        method: 'POST',
+        path: '/slots',
+        tags: ['slots'],
+        requestBody: {
+          content: [
+            ast.factory.createContent({
+              contentType: 'application/json',
+              schema: ast.factory.createSchema({
+                type: 'object',
+                primitive: 'object',
+                properties: [
+                  ast.factory.createProperty({ name: 'startsAt', required: true, schema: ast.factory.createSchema({ type: 'string', format: 'time' }) }),
+                ],
+              }),
+            }),
+          ],
+        },
+        responses: [
+          ast.factory.createResponse({
+            statusCode: '201',
+            schema: ast.factory.createSchema({
+              type: 'object',
+              primitive: 'object',
+              properties: [
+                ast.factory.createProperty({ name: 'startsAt', required: true, schema: ast.factory.createSchema({ type: 'string', format: 'time' }) }),
+              ],
+            }),
+            description: 'Booked',
+          }),
+        ],
+      }),
+      options: {
+        printer: {
+          nodes: {
+            string(node) {
+              if (node.format !== 'time') return this.base(node)
+              return this.options.direction === 'input'
+                ? 'z.instanceof(Temporal.PlainTime).transform((value) => value.toString())'
+                : 'z.string().transform((value) => Temporal.PlainTime.from(value))'
+            },
+          },
+        },
+      },
+    },
   ]
 
   test.each(operations)('$name', async (props) => {
