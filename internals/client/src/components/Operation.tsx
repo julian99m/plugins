@@ -1,6 +1,5 @@
 import { buildOperationComments, getContentTypeInfo, getResponseContentTypeInfo, getResponseType, isEventStream } from '@internals/shared'
 import { ast } from 'kubb/kit'
-import type { ResolverTs } from '@kubb/plugin-ts'
 import type { ResolverZod } from '@kubb/plugin-zod'
 import { File, Function } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
@@ -9,6 +8,7 @@ import { type Auth, buildSecurityMetadata } from '../builders/security.ts'
 import { buildGroupedOptionsSignature } from '../builders/signature.ts'
 import { buildStyles } from '../builders/styles.ts'
 import { buildValidatorHooks } from '../builders/validator.ts'
+import type { OperationTypeNames } from '../resolveOperationTypes.ts'
 import type { ValidatorOptions } from '../types.ts'
 
 type Props = {
@@ -21,9 +21,10 @@ type Props = {
    */
   node: ast.OperationNode
   /**
-   * Resolver for the plugin-ts type names the signature references.
+   * The operation type names the signature references, from `plugin-ts` or `plugin-zod`'s inferred
+   * types.
    */
-  tsResolver: ResolverTs
+  types: OperationTypeNames
   /**
    * Resolver for the zod schema names the validators reference, when `validator` is on.
    */
@@ -46,10 +47,10 @@ type Props = {
  * single `options` object to the resolved client and returns the `RequestResult`. The type, signature,
  * and call config are built with the AST factory, and only the jsx-renderer emits the source.
  */
-export function Operation({ name, node, tsResolver, zodResolver, validator, security, isExportable = true, isIndexable = true }: Props): KubbReactNode {
+export function Operation({ name, node, types, zodResolver, validator, security, isExportable = true, isIndexable = true }: Props): KubbReactNode {
   if (!ast.isHttpOperationNode(node)) return null
 
-  const signature = buildGroupedOptionsSignature({ node, tsResolver })
+  const signature = buildGroupedOptionsSignature({ node, types })
   const validators = buildValidatorHooks({ node, validator, zodResolver })
   const securityLiteral = buildSecurityMetadata({ security })
   const stylesLiteral = buildStyles({ node })
@@ -92,9 +93,9 @@ export function Operation({ name, node, tsResolver, zodResolver, validator, secu
     .filter(Boolean)
     .join(', ')} }`
 
-  const eventType = `SuccessOf<${tsResolver.response.responses(node)}>`
+  const eventType = `SuccessOf<${types.response.responses(node)}>`
   const returnType = eventStream ? `Promise<EventStreamResult<${eventType}>>` : signature.returnType
-  const returnStatement = eventStream ? `return toEventStream<${eventType}>(request(${callConfig}))` : buildReturnStatement({ node, tsResolver, callConfig })
+  const returnStatement = eventStream ? `return toEventStream<${eventType}>(request(${callConfig}))` : buildReturnStatement({ node, types, callConfig })
 
   return (
     <File.Source name={name} isExportable={isExportable} isIndexable={isIndexable}>

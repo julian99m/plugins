@@ -3,6 +3,7 @@ export type {
   StreamPetEventsPathPetIdSchemaType,
   StreamPetEventsPathSchemaType,
   StreamPetEventsResponseSchemaType,
+  StreamPetEventsResponsesSchemaType,
   StreamPetEventsStatus200SchemaType,
 } from './streamPetEventsSchema'
 export {
@@ -10,5 +11,6 @@ export {
   streamPetEventsPathPetIdSchema,
   streamPetEventsPathSchema,
   streamPetEventsResponseSchema,
+  streamPetEventsResponsesSchema,
   streamPetEventsStatus200Schema,
 } from './streamPetEventsSchema'

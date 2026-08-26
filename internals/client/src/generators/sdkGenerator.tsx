@@ -3,8 +3,6 @@ import { getOperationParameters, operationFileEntry } from '@internals/shared'
 import { camelCase } from '@internals/utils'
 import { ast, defineGenerator } from 'kubb/kit'
 import type { Generator } from 'kubb/kit'
-import type { ResolverTs } from '@kubb/plugin-ts'
-import { pluginTsName } from '@kubb/plugin-ts'
 import type { ResolverZod } from '@kubb/plugin-zod'
 import { pluginZodName } from '@kubb/plugin-zod'
 import { File, jsxRenderer } from 'kubb/jsx'
@@ -18,6 +16,7 @@ import {
 import { type Auth, getOperationSecurity, type SecurityDocument } from '../builders/security.ts'
 import { SdkClient } from '../components/SdkClient.tsx'
 import { SdkFacade } from '../components/SdkFacade.tsx'
+import { MISSING_OPERATION_TYPES_WARNING, type OperationTypeNames, type OperationTypeSource, resolveOperationTypes } from '../resolveOperationTypes.ts'
 import type { ContractClientFactory, ValidatorOptions } from '../types.ts'
 
 type GeneratorContext = Parameters<NonNullable<Generator<ContractClientFactory>['operations']>>[1]
@@ -25,7 +24,7 @@ type GeneratorContext = Parameters<NonNullable<Generator<ContractClientFactory>[
 type OperationData = {
   node: ast.OperationNode
   name: string
-  tsResolver: ResolverTs
+  types: OperationTypeNames
   zodResolver: ResolverZod | null
   typeFile: ast.FileNode
   zodFile: ast.FileNode | null
@@ -39,8 +38,8 @@ type Controller = {
   operations: Array<OperationData>
 }
 
-function resolveTypeImportNames(node: ast.OperationNode, tsResolver: ResolverTs): Array<string> {
-  return [tsResolver.response.options(node), tsResolver.response.responses(node)]
+function resolveTypeImportNames(node: ast.OperationNode, types: OperationTypeNames): Array<string> {
+  return [types.response.options(node), types.response.responses(node)]
 }
 
 function resolveZodImportNames(node: ast.OperationNode, zodResolver: ResolverZod, validator: ValidatorOptions): Array<string> {
@@ -58,23 +57,20 @@ function resolveZodImportNames(node: ast.OperationNode, zodResolver: ResolverZod
  * Groups operations into one controller per tag. Operations without a tag fall back to a single
  * `Client`/`ApiClient` controller, matching the resolver's default naming.
  */
-function buildControllers(nodes: ReadonlyArray<ast.OperationNode>, ctx: GeneratorContext): Array<Controller> {
+function buildControllers(nodes: ReadonlyArray<ast.OperationNode>, ctx: GeneratorContext, types: OperationTypeSource): Array<Controller> {
   const { driver, resolver, root } = ctx
   const { output, group, validator } = ctx.options
 
-  const pluginTs = driver.getPlugin(pluginTsName)!
-  const tsResolver = driver.getResolver(pluginTsName)
-  const tsPluginOptions = pluginTs.options
   const pluginZod = isValidatorEnabled(validator) ? driver.getPlugin(pluginZodName) : null
   const zodResolver = pluginZod ? driver.getResolver(pluginZodName) : null
   const document = ctx.adapter.document as SecurityDocument | null | undefined
 
   function buildOperationData(node: ast.OperationNode): OperationData {
-    const typeFile = tsResolver.file({
+    const typeFile = types.resolver.file({
       ...operationFileEntry(node, node.operationId),
       root,
-      output: tsPluginOptions?.output ?? output,
-      group: tsPluginOptions?.group,
+      output: types.output ?? output,
+      group: types.group,
     })
     const zodFile =
       zodResolver && pluginZod?.options
@@ -88,7 +84,7 @@ function buildControllers(nodes: ReadonlyArray<ast.OperationNode>, ctx: Generato
 
     const security = ast.isHttpOperationNode(node) ? getOperationSecurity({ document, method: node.method, path: node.path }) : undefined
 
-    return { node, name: resolver.name(node.operationId), tsResolver, zodResolver, typeFile, zodFile, security }
+    return { node, name: resolver.name(node.operationId), types, zodResolver, typeFile, zodFile, security }
   }
 
   return nodes.reduce((acc, operationNode) => {
@@ -144,10 +140,15 @@ export function createSdkGenerator<TFactory extends ContractClientFactory>(): Ge
       const { config, resolver, root } = ctx
       const { output, group, validator, sdk } = ctx.options
 
-      const pluginTs = ctx.driver.getPlugin(pluginTsName)
-      if (!pluginTs || !sdk) return null
+      if (!sdk) return null
 
-      const controllers = buildControllers(nodes, ctx)
+      const types = resolveOperationTypes(ctx.driver)
+      if (!types) {
+        ctx.warn(MISSING_OPERATION_TYPES_WARNING)
+        return null
+      }
+
+      const controllers = buildControllers(nodes, ctx, types)
       const clientPath = path.resolve(root, '.kubb/client.ts')
 
       const banner = (file: ast.FileNode) => resolver.default.banner(ctx.meta, { output, config, file: { path: file.path, baseName: file.baseName } })
@@ -156,7 +157,7 @@ export function createSdkGenerator<TFactory extends ContractClientFactory>(): Ge
       const renderClassFile = (className: string, file: ast.FileNode, ops: Array<OperationData>) => {
         const { namesByPath: typeNamesByPath, filesByPath: typeFilesByPath } = collectImportsByFile(ops, (op) => ({
           file: op.typeFile,
-          names: resolveTypeImportNames(op.node, op.tsResolver),
+          names: resolveTypeImportNames(op.node, op.types),
         }))
         const { namesByPath: zodNamesByPath, filesByPath: zodFilesByPath } = isValidatorEnabled(validator)
           ? collectImportsByFile(ops, (op) => ({ file: op.zodFile, names: op.zodResolver ? resolveZodImportNames(op.node, op.zodResolver, validator) : [] }))

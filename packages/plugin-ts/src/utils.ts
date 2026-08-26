@@ -1,4 +1,3 @@
-import { resolveContentTypeVariants } from '@internals/shared'
 import { jsStringEscape, stringify } from '@internals/utils'
 import { ast, syncSchemaRef } from 'kubb/kit'
 import type { ResolverTs } from './types.ts'
@@ -101,57 +100,6 @@ export function buildParams({ params }: BuildParamsSchemaOptions): ast.SchemaNod
         name: param.name,
         required: param.required,
         schema: ast.factory.createSchema({ ...param.schema, optional: !param.required }),
-      }),
-    ),
-  })
-}
-
-/**
- * The schema a status occupies in the `<Name>Responses` record. A status that documents several
- * content types becomes a `{ contentType; data }` union so the runtime can surface the negotiated type
- * on `result.parsed`, while the standalone `<Name>StatusNNN` alias stays the plain body union that the
- * query hooks and `result.data` use.
- */
-function buildResponseRecordEntry(node: ast.OperationNode, res: ast.ResponseNode, resolver: ResolverTs): ast.SchemaNode {
-  const statusName = resolver.response.status(node, res.statusCode)
-  const variants = (res.content ?? []).filter((entry) => entry.schema)
-  if (variants.length <= 1) {
-    return ast.factory.createSchema({ type: 'ref', name: statusName })
-  }
-
-  return ast.factory.createSchema({
-    type: 'union',
-    members: resolveContentTypeVariants(variants, statusName).map((variant) =>
-      ast.factory.createSchema({
-        type: 'object',
-        properties: [
-          ast.factory.createProperty({
-            name: 'contentType',
-            required: true,
-            schema: ast.factory.createSchema({ type: 'enum', enumValues: [variant.contentType] }),
-          }),
-          ast.factory.createProperty({
-            name: 'data',
-            required: true,
-            schema: ast.factory.createSchema({ type: 'ref', name: variant.name }),
-          }),
-        ],
-      }),
-    ),
-  })
-}
-
-export function buildResponses(node: ast.OperationNode, { resolver }: BuildOperationSchemaOptions): ast.SchemaNode {
-  // Always emit the keyed responses map, even when an operation declares no responses. An operation
-  // with no responses renders as an empty `object`, which keeps every consumer's import (for example
-  // the axios SDK's `RequestResult<XResponses>`) resolvable instead of pointing at a missing export.
-  return ast.factory.createSchema({
-    type: 'object',
-    properties: node.responses.map((res) =>
-      ast.factory.createProperty({
-        name: String(res.statusCode),
-        required: true,
-        schema: buildResponseRecordEntry(node, res, resolver),
       }),
     ),
   })

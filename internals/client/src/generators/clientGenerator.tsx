@@ -2,12 +2,12 @@ import path from 'node:path'
 import { isEventStream, operationFileEntry, resolveDependencyOperationFile } from '@internals/shared'
 import { ast, defineGenerator } from 'kubb/kit'
 import type { Generator } from 'kubb/kit'
-import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
 import { File, jsxRenderer } from 'kubb/jsx'
 import { buildZodErrorParse, resolveRequestValidator, resolveResponseValidator } from '../builders/validatorOptions.ts'
 import { getOperationSecurity, type SecurityDocument } from '../builders/security.ts'
 import { Operation } from '../components/Operation.tsx'
+import { MISSING_OPERATION_TYPES_WARNING, resolveOperationTypes } from '../resolveOperationTypes.ts'
 import type { ContractClientFactory } from '../types.ts'
 
 /**
@@ -27,17 +27,18 @@ export function createClientGenerator<TFactory extends ContractClientFactory>(na
       const { config, driver, resolver, root } = ctx
       const { output, validator, group } = ctx.options
 
-      const pluginTs = driver.getPlugin(pluginTsName)
-      if (!pluginTs) return null
-
-      const tsResolver = driver.getResolver(pluginTsName)
+      const types = resolveOperationTypes(driver)
+      if (!types) {
+        ctx.warn(MISSING_OPERATION_TYPES_WARNING)
+        return null
+      }
 
       const validatorEnabled = resolveResponseValidator(validator) === 'zod' || resolveRequestValidator(validator) === 'zod'
       const pluginZod = validatorEnabled ? driver.getPlugin(pluginZodName) : null
       const zodResolver = pluginZod ? driver.getResolver(pluginZodName) : null
 
       const hasRequestBody = Boolean(node.requestBody?.content?.[0]?.schema)
-      const importedTypeNames = [tsResolver.response.options(node), tsResolver.response.responses(node)]
+      const importedTypeNames = [types.response.options(node), types.response.responses(node)]
 
       const importedZodNames = zodResolver
         ? [
@@ -50,13 +51,13 @@ export function createClientGenerator<TFactory extends ContractClientFactory>(na
       const meta = {
         name: resolver.name(node.operationId),
         file: resolver.file({ ...operationFileEntry(node, node.operationId), root, output, group: group ?? undefined }),
-        fileTs: resolveDependencyOperationFile({
+        fileTypes: resolveDependencyOperationFile({
           cache: ctx.cache,
           node,
-          resolver: tsResolver,
+          resolver: types.resolver,
           root,
-          output: pluginTs.options?.output ?? output,
-          group: pluginTs.options?.group,
+          output: types.output ?? output,
+          group: types.group,
         }),
         fileZod:
           zodResolver && pluginZod?.options
@@ -94,13 +95,13 @@ export function createClientGenerator<TFactory extends ContractClientFactory>(na
             isTypeOnly
           />
 
-          {meta.fileTs && importedTypeNames.length > 0 && (
-            <File.Import name={Array.from(new Set(importedTypeNames))} root={meta.file.path} path={meta.fileTs.path} isTypeOnly />
+          {meta.fileTypes && importedTypeNames.length > 0 && (
+            <File.Import name={Array.from(new Set(importedTypeNames))} root={meta.file.path} path={meta.fileTypes.path} isTypeOnly />
           )}
 
           {meta.fileZod && importedZodNames.length > 0 && <File.Import name={importedZodNames} root={meta.file.path} path={meta.fileZod.path} />}
 
-          <Operation name={meta.name} node={node} tsResolver={tsResolver} zodResolver={zodResolver} validator={validator} security={security} />
+          <Operation name={meta.name} node={node} types={types} zodResolver={zodResolver} validator={validator} security={security} />
         </File>
       )
     },

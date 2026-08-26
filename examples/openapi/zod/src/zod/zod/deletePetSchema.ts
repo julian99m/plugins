@@ -45,3 +45,9 @@ export const deletePetOptionsSchema = z.object({
 })
 
 export type DeletePetOptionsSchemaType = z.infer<typeof deletePetOptionsSchema>
+
+export const deletePetResponsesSchema = z.object({
+  '400': deletePetStatus400Schema,
+})
+
+export type DeletePetResponsesSchemaType = z.infer<typeof deletePetResponsesSchema>

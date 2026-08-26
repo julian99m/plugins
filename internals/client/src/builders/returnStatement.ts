@@ -1,5 +1,5 @@
 import type { ast } from 'kubb/kit'
-import type { ResolverTs } from '@kubb/plugin-ts'
+import type { OperationTypeNames } from '../resolveOperationTypes.ts'
 import { buildRequestResultGenerics } from './generics.ts'
 
 /**
@@ -10,6 +10,6 @@ import { buildRequestResultGenerics } from './generics.ts'
  * @example
  * `return request({ method: 'POST', url: '/pet', ...config }) as Promise<RequestResult<AddPetResponses, ThrowOnError>>`
  */
-export function buildReturnStatement({ node, tsResolver, callConfig }: { node: ast.OperationNode; tsResolver: ResolverTs; callConfig: string }): string {
-  return `return request(${callConfig}) as Promise<RequestResult<${buildRequestResultGenerics({ node, tsResolver })}>>`
+export function buildReturnStatement({ node, types, callConfig }: { node: ast.OperationNode; types: OperationTypeNames; callConfig: string }): string {
+  return `return request(${callConfig}) as Promise<RequestResult<${buildRequestResultGenerics({ node, types })}>>`
 }

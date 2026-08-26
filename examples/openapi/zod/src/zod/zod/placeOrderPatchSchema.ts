@@ -46,3 +46,10 @@ export const placeOrderPatchOptionsSchema = z.object({
 })
 
 export type PlaceOrderPatchOptionsSchemaType = z.infer<typeof placeOrderPatchOptionsSchema>
+
+export const placeOrderPatchResponsesSchema = z.object({
+  '200': placeOrderPatchStatus200Schema,
+  '405': placeOrderPatchStatus405Schema,
+})
+
+export type PlaceOrderPatchResponsesSchemaType = z.infer<typeof placeOrderPatchResponsesSchema>

@@ -14,6 +14,6 @@ const node = ast.factory.createOperation({
 
 describe('buildRequestResultGenerics', () => {
   test('names the responses record and threads ThrowOnError', () => {
-    expect(buildRequestResultGenerics({ node, tsResolver: resolverTs })).toBe('GetPetByIdResponses, ThrowOnError')
+    expect(buildRequestResultGenerics({ node, types: resolverTs })).toBe('GetPetByIdResponses, ThrowOnError')
   })
 })
