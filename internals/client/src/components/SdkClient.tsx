@@ -1,16 +1,16 @@
 import type { ast } from 'kubb/kit'
-import type { ResolverTs } from '@kubb/plugin-ts'
 import type { ResolverZod } from '@kubb/plugin-zod'
 import { File } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
 import { buildSdkMethod } from '../builders/sdkMethod.ts'
 import type { Auth } from '../builders/security.ts'
+import type { OperationTypeNames } from '../resolveOperationTypes.ts'
 import type { ValidatorOptions } from '../types.ts'
 
 type OperationData = {
   node: ast.OperationNode
   name: string
-  tsResolver: ResolverTs
+  types: OperationTypeNames
   zodResolver?: ResolverZod | null
   security?: Array<Auth>
 }
@@ -31,11 +31,11 @@ type Props = {
  * still overrides the instance client for a one-off call.
  */
 export function SdkClient({ name, isExportable = true, isIndexable = true, operations, validator, children }: Props): KubbReactNode {
-  const methods = operations.map(({ node, name: methodName, tsResolver, zodResolver, security }) =>
+  const methods = operations.map(({ node, name: methodName, types, zodResolver, security }) =>
     buildSdkMethod({
       node,
       name: methodName,
-      tsResolver,
+      types,
       zodResolver,
       validator,
       security,

@@ -494,6 +494,65 @@ export function buildOptionsSchema(node: ast.OperationNode, resolver: OperationT
   })
 }
 
+/**
+ * The schema a status occupies in the `<Name>Responses` record. A status that documents several
+ * content types becomes a `{ contentType; data }` union so the runtime can surface the negotiated type
+ * on `result.parsed`, while the standalone `<Name>StatusNNN` alias stays the plain body union that the
+ * query hooks and `result.data` use.
+ */
+function buildResponseRecordEntry(node: ast.OperationNode, res: ast.ResponseNode, resolver: ResponseStatusNameResolver): ast.SchemaNode {
+  const statusName = resolver.response.status(node, res.statusCode)
+  const variants = (res.content ?? []).filter((entry) => entry.schema)
+  if (variants.length <= 1) {
+    return ast.factory.createSchema({ type: 'ref', name: statusName })
+  }
+
+  return ast.factory.createSchema({
+    type: 'union',
+    members: resolveContentTypeVariants(variants, statusName).map((variant) =>
+      ast.factory.createSchema({
+        type: 'object',
+        primitive: 'object',
+        properties: [
+          ast.factory.createProperty({
+            name: 'contentType',
+            required: true,
+            schema: ast.factory.createSchema({ type: 'enum', enumValues: [variant.contentType] }),
+          }),
+          ast.factory.createProperty({
+            name: 'data',
+            required: true,
+            schema: ast.factory.createSchema({ type: 'ref', name: variant.name }),
+          }),
+        ],
+      }),
+    ),
+  })
+}
+
+/**
+ * Builds the per-status `<Name>Responses` record for an operation, referencing the already-resolved
+ * `<Name>StatusNNN` names. Shared by `@kubb/plugin-ts`'s `Responses` type and `@kubb/plugin-zod`'s
+ * inferred responses schema, so both emit the same shape from the same inputs.
+ *
+ * Always emits the keyed record, even when an operation declares no responses. An operation with no
+ * responses renders as an empty object, which keeps every consumer's import (for example the axios
+ * SDK's `RequestResult<XResponses>`) resolvable instead of pointing at a missing export.
+ */
+export function buildResponses(node: ast.OperationNode, resolver: ResponseStatusNameResolver): ast.SchemaNode {
+  return ast.factory.createSchema({
+    type: 'object',
+    primitive: 'object',
+    properties: node.responses.map((res) =>
+      ast.factory.createProperty({
+        name: String(res.statusCode),
+        required: true,
+        schema: buildResponseRecordEntry(node, res, resolver),
+      }),
+    ),
+  })
+}
+
 export function getStatusCodeNumber(statusCode: ast.StatusCode | number | string): number | null {
   const code = Number(statusCode)
 

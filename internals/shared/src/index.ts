@@ -4,6 +4,7 @@ export {
   buildOptionsSchema,
   buildRequestConfigType,
   buildRequestParamsSignature,
+  buildResponses,
   findSuccessStatusCode,
   getContentTypeInfo,
   getOperationParameters,

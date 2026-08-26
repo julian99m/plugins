@@ -31,28 +31,18 @@ const listPets = ast.factory.createOperation({
 
 describe('buildGroupedOptionsSignature', () => {
   test('emits a single grouped options parameter with a ThrowOnError generic', () => {
-    const signature = buildGroupedOptionsSignature({ node: addPet, tsResolver: resolverTs })
+    const signature = buildGroupedOptionsSignature({ node: addPet, types: resolverTs })
     expect(signature.paramsSignature).toBe('options: Options<AddPetOptions, ThrowOnError>')
     expect(signature.generics).toStrictEqual(['ThrowOnError extends boolean = true'])
   })
 
   test('defaults the options parameter when the operation has no required request data', () => {
-    const signature = buildGroupedOptionsSignature({ node: listPets, tsResolver: resolverTs })
+    const signature = buildGroupedOptionsSignature({ node: listPets, types: resolverTs })
     expect(signature.paramsSignature).toBe('options: Options<ListPetsOptions, ThrowOnError> = {}')
   })
 
   test('keys the return type on the plugin-ts per-status responses record', () => {
-    const signature = buildGroupedOptionsSignature({ node: addPet, tsResolver: resolverTs })
+    const signature = buildGroupedOptionsSignature({ node: addPet, types: resolverTs })
     expect(signature.returnType).toBe('Promise<RequestResult<AddPetResponses, ThrowOnError>>')
-  })
-
-  test('uses the plugin-ts Options type directly as the grouped data type', () => {
-    const signature = buildGroupedOptionsSignature({ node: addPet, tsResolver: resolverTs })
-    expect(signature.dataTypeName).toBe('AddPetOptions')
-  })
-
-  test('imports only the options and responses types', () => {
-    const signature = buildGroupedOptionsSignature({ node: addPet, tsResolver: resolverTs })
-    expect(signature.importedTypeNames).toStrictEqual(['AddPetOptions', 'AddPetResponses'])
   })
 })

@@ -1,9 +1,10 @@
+import { buildResponses } from '@internals/shared'
 import { ast } from 'kubb/kit'
 import ts from 'typescript'
 import { describe, expect, it } from 'vitest'
 import { printerTs } from './printers/printerTs.ts'
 import { resolverTs } from './resolvers/resolverTs.ts'
-import { buildParams, buildPropertyJSDocComments, buildResponses, buildResponseUnion } from './utils.ts'
+import { buildParams, buildPropertyJSDocComments, buildResponseUnion } from './utils.ts'
 
 const printer = printerTs({
   resolver: resolverTs,
@@ -77,7 +78,7 @@ describe('buildResponses', () => {
       ],
     })
 
-    expect(printSchema(buildResponses(node, { resolver: resolverTs }))).toMatchInlineSnapshot(`
+    expect(printSchema(buildResponses(node, resolverTs))).toMatchInlineSnapshot(`
       "{
           "200": ListPetsStatus200;
           default: ListPetsStatusDefault;
@@ -93,7 +94,7 @@ describe('buildResponses', () => {
       responses: [],
     })
 
-    expect(printSchema(buildResponses(node, { resolver: resolverTs }))).toBe('object')
+    expect(printSchema(buildResponses(node, resolverTs))).toBe('object')
   })
 })
 

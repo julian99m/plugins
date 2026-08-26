@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { createSdkGenerator, defaultMacros, isValidatorEnabled, resolverClient } from '@internals/client'
+import { createSdkGenerator, defaultMacros, resolverClient } from '@internals/client'
 import { createGroupConfig } from '@internals/shared'
 import { definePlugin, Resolver } from 'kubb/kit'
 import { pluginTsName } from '@kubb/plugin-ts'
@@ -68,7 +68,9 @@ export const pluginAxios = definePlugin<PluginAxios>((options) => {
   return {
     name: pluginAxiosName,
     options,
-    dependencies: [pluginTsName, ...(isValidatorEnabled(resolved.validator) ? [pluginZodName] : [])],
+    // Both are ordering hints, dropped when the plugin is not in the pipeline. `plugin-ts` supplies
+    // the operation types unless it is absent, in which case `pluginZod({ inferred: true })` does.
+    dependencies: [pluginTsName, pluginZodName],
     hooks: {
       'kubb:plugin:setup'(ctx) {
         ctx.setOptions(resolved)

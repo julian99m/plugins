@@ -1,5 +1,6 @@
 import {
   buildOptionsSchema,
+  buildResponses,
   collectRefNames,
   getOasAdapter,
   getOperationParameters,
@@ -348,8 +349,9 @@ export const zodGenerator = defineGenerator<PluginZod>({
     })()
 
     // Grouped path/query/headers schemas plus the combined `{ body, path, query, headers }` options
-    // schema exist only to back `resolver.response.options(node)` for consumers sourcing types from
-    // this plugin instead of `plugin-ts`. Not worth generating when nothing will import them.
+    // and per-status `responses` schemas exist only to back `resolver.response.options(node)` and
+    // `resolver.response.responses(node)` for consumers sourcing types from this plugin instead of
+    // `plugin-ts`. Not worth generating when nothing will import them.
     const { path, query, header } = getOperationParameters(node)
 
     const paramGroupSchemas = inferred
@@ -374,6 +376,9 @@ export const zodGenerator = defineGenerator<PluginZod>({
       ? renderSchemaEntry({ schema: buildOptionsSchema(node, resolver), name: resolver.name(`${node.operationId} Options`), direction: 'input' })
       : null
 
+    // The per-status record a client's `RequestResult` is keyed on. Response bodies, so `output`.
+    const responsesSchema = inferred ? renderSchemaEntry({ schema: buildResponses(node, resolver), name: resolver.response.responses(node) }) : null
+
     return (
       <File
         baseName={meta.file.baseName}
@@ -390,6 +395,7 @@ export const zodGenerator = defineGenerator<PluginZod>({
         {requestSchema}
         {paramGroupSchemas}
         {optionsSchema}
+        {responsesSchema}
       </File>
     )
   },

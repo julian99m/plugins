@@ -10,6 +10,7 @@ import { pluginBarrel } from '@kubb/plugin-barrel'
 import { pluginFetch } from '@kubb/plugin-fetch'
 import { parserTs } from '@kubb/parser-ts'
 import { pluginTs } from '@kubb/plugin-ts'
+import { pluginZod } from '@kubb/plugin-zod'
 import { describe, expect, test } from 'vitest'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -80,6 +81,38 @@ const configs: Array<{ name: string; config: BuildConfig }> = [
       plugins: [
         pluginTs({ output: { path: './types', barrel: false, mode: 'directory' } }),
         pluginFetch({ output: { path: './clients', barrel: false, mode: 'directory' }, sdk: { mode: 'flat', name: 'PetStore' } }),
+      ],
+    },
+  },
+
+  // ─── zodTypes (no plugin-ts, operations typed from pluginZod's inferred types) ──
+  {
+    name: 'zodTypes',
+    config: {
+      root: __dirname,
+      input: '../../schemas/3.0.x/petStore.yaml',
+      output: { path: './gen', barrel: false },
+      adapter: adapterOas({ validate: false, enums: 'root' }),
+      parsers: [parserTs()],
+      plugins: [
+        pluginZod({ inferred: true, output: { path: './zod', barrel: false, mode: 'directory' } }),
+        pluginFetch({ output: { path: './clients', barrel: false, mode: 'directory' }, validator: 'zod' }),
+      ],
+    },
+  },
+
+  // ─── zodTypesSdk (the sdk class path, also typed from pluginZod) ────────
+  {
+    name: 'zodTypesSdk',
+    config: {
+      root: __dirname,
+      input: '../../schemas/3.0.x/petStore.yaml',
+      output: { path: './gen', barrel: false },
+      adapter: adapterOas({ validate: false, enums: 'root' }),
+      parsers: [parserTs()],
+      plugins: [
+        pluginZod({ inferred: true, output: { path: './zod', barrel: false, mode: 'directory' } }),
+        pluginFetch({ output: { path: './clients', barrel: false, mode: 'directory' }, validator: 'zod', sdk: {} }),
       ],
     },
   },
