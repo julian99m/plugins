@@ -39,3 +39,10 @@ export const addFilesOptionsSchema = z.object({
 })
 
 export type AddFilesOptionsSchemaType = z.infer<typeof addFilesOptionsSchema>
+
+export const addFilesResponsesSchema = z.object({
+  '200': addFilesStatus200Schema,
+  '405': addFilesStatus405Schema,
+})
+
+export type AddFilesResponsesSchemaType = z.infer<typeof addFilesResponsesSchema>

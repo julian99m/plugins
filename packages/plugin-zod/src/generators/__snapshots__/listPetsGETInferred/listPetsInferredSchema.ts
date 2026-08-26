@@ -32,3 +32,9 @@ export const listPetsInferredOptionsSchema = z.object({
 })
 
 export type ListPetsInferredOptionsSchemaType = z.infer<typeof listPetsInferredOptionsSchema>
+
+export const listPetsInferredResponsesSchema = z.object({
+  '200': listPetsInferredStatus200Schema,
+})
+
+export type ListPetsInferredResponsesSchemaType = z.infer<typeof listPetsInferredResponsesSchema>

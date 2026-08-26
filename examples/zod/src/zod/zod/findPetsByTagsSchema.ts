@@ -68,3 +68,19 @@ export const findPetsByTagsOptionsSchema = z.object({
 })
 
 export type FindPetsByTagsOptionsSchemaType = z.infer<typeof findPetsByTagsOptionsSchema>
+
+export const findPetsByTagsResponsesSchema = z.object({
+  '200': z.union([
+    z.object({
+      contentType: z.enum(['application/json']),
+      data: findPetsByTagsStatus200SchemaJson,
+    }),
+    z.object({
+      contentType: z.enum(['application/xml']),
+      data: findPetsByTagsStatus200SchemaXml,
+    }),
+  ]),
+  '400': findPetsByTagsStatus400Schema,
+})
+
+export type FindPetsByTagsResponsesSchemaType = z.infer<typeof findPetsByTagsResponsesSchema>

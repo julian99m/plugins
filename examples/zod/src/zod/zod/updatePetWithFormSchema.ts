@@ -50,3 +50,9 @@ export const updatePetWithFormOptionsSchema = z.object({
 })
 
 export type UpdatePetWithFormOptionsSchemaType = z.infer<typeof updatePetWithFormOptionsSchema>
+
+export const updatePetWithFormResponsesSchema = z.object({
+  '405': updatePetWithFormStatus405Schema,
+})
+
+export type UpdatePetWithFormResponsesSchemaType = z.infer<typeof updatePetWithFormResponsesSchema>

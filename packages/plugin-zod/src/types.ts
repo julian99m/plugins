@@ -99,7 +99,9 @@ export type ResolverZod = Resolver & {
      */
     body(node: ast.OperationNode): string
     /**
-     * Resolves the name for the collection of all operation responses.
+     * Resolves the name for the per-status record of all operation responses. Only meaningful when
+     * `inferred: true`, since the schema and type this name points to are generated only in that
+     * case. Generated clients key their `RequestResult` on the inferred type.
      *
      * @example Responses collection names
      * `resolver.response.responses(node) // → 'listPetsResponsesSchema'`
