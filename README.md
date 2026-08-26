@@ -80,19 +80,29 @@ Plugins built and maintained by the community. Want to add yours? See [CONTRIBUT
 
 ## Examples
 
-| Example                                 | Description                         |
-| --------------------------------------- | ----------------------------------- |
-| [`typescript`](./examples/typescript)   | Generate TypeScript types           |
-| [`client`](./examples/client)           | Generate API clients with Axios     |
-| [`fetch`](./examples/fetch)             | Generate API clients with Fetch     |
-| [`zod`](./examples/zod)                 | Generate Zod validation schemas     |
-| [`react-query`](./examples/react-query) | Generate React Query hooks          |
-| [`vue-query`](./examples/vue-query)     | Generate Vue Query composables      |
-| [`faker`](./examples/faker)             | Generate Faker.js mock data         |
-| [`msw`](./examples/msw)                 | Generate MSW handlers               |
-| [`cypress`](./examples/cypress)         | Generate Cypress tests              |
-| [`mcp`](./examples/mcp)                 | Generate MCP tools                  |
-| [`advanced`](./examples/advanced)       | Advanced multi-plugin configuration |
+Examples are grouped by adapter, `openapi` or `arazzo`, under `./examples/<adapter>/<name>`.
+
+### OpenAPI adapter
+
+| Example                                                     | Description                         |
+| ------------------------------------------------------------ | ----------------------------------- |
+| [`typescript`](./examples/openapi/typescript)   | Generate TypeScript types           |
+| [`client`](./examples/openapi/client)           | Generate API clients with Axios     |
+| [`fetch`](./examples/openapi/fetch)             | Generate API clients with Fetch     |
+| [`zod`](./examples/openapi/zod)                 | Generate Zod validation schemas     |
+| [`react-query`](./examples/openapi/react-query) | Generate React Query hooks          |
+| [`vue-query`](./examples/openapi/vue-query)     | Generate Vue Query composables      |
+| [`faker`](./examples/openapi/faker)             | Generate Faker.js mock data         |
+| [`msw`](./examples/openapi/msw)                 | Generate MSW handlers               |
+| [`cypress`](./examples/openapi/cypress)         | Generate Cypress tests              |
+| [`mcp`](./examples/openapi/mcp)                 | Generate MCP tools                  |
+| [`advanced`](./examples/openapi/advanced)       | Advanced multi-plugin configuration |
+
+### Arazzo adapter
+
+| Example                                       | Description                                  |
+| ---------------------------------------------- | --------------------------------------------- |
+| [`typescript`](./examples/arazzo/typescript)   | Generate TypeScript types from Arazzo workflows |
 
 ## Contributing
 

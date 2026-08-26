@@ -1,0 +1,44 @@
+{
+  "name": "msw-pet-store",
+  "version": "0.0.0",
+  "private": true,
+  "description": "MSW PetStore example",
+  "license": "MIT",
+  "author": "stijnvanhulle",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kubb-labs/plugins.git",
+    "directory": "examples/openapi/msw"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "generate": "KUBB_DISABLE_TELEMETRY=1 kubb generate",
+    "generate:js": "KUBB_DISABLE_TELEMETRY=1 kubb generate --config .kubbrc",
+    "generate:json": "KUBB_DISABLE_TELEMETRY=1 kubb generate --config kubb.json",
+    "generate:ts": "KUBB_DISABLE_TELEMETRY=1 kubb generate --config kubb.config.js",
+    "start:server": "bun ./src/server.ts",
+    "test": "vitest --passWithNoTests",
+    "typecheck": "tsc -p ./tsconfig.json --noEmit --emitDeclarationOnly false"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^10.6.0",
+    "@kubb/adapter-oas": "catalog:",
+    "@kubb/plugin-faker": "workspace:*",
+    "@kubb/plugin-msw": "workspace:*",
+    "@kubb/plugin-ts": "workspace:*",
+    "@mswjs/http-middleware": "^0.10.3",
+    "kubb": "catalog:",
+    "msw": "^2.15.0",
+    "react": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "typescript": "catalog:"
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=11.0.0"
+  },
+  "packageManager": "pnpm@11.20.0"
+}

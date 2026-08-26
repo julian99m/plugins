@@ -1,0 +1,39 @@
+{
+  "name": "typescript-pet-store",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TypeScript PetStore example",
+  "license": "MIT",
+  "author": "stijnvanhulle",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kubb-labs/plugins.git",
+    "directory": "examples/openapi/typescript"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('./dist', {recursive:true,force:true})\"",
+    "generate": "KUBB_DISABLE_TELEMETRY=1 kubb generate",
+    "generate:debug": "NODE_OPTIONS='--inspect-brk' KUBB_DISABLE_TELEMETRY=1 kubb generate",
+    "validate": "kubb validate petStore.yaml",
+    "test": "vitest",
+    "typecheck": "tsc -p ./tsconfig.json --noEmit --emitDeclarationOnly false"
+  },
+  "dependencies": {
+    "@kubb/adapter-oas": "catalog:",
+    "@kubb/plugin-ts": "workspace:*",
+    "axios": "^1.19.0",
+    "kubb": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=11.0.0"
+  },
+  "packageManager": "pnpm@11.20.0",
+  "msw": {
+    "workerDirectory": "public"
+  }
+}

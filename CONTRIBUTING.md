@@ -56,8 +56,8 @@ plugins/
 │   ├── shared/              # Shared AST helpers used across packages
 │   ├── tanstack-query/      # Shared TanStack Query utilities
 │   └── utils/               # General utilities
-├── examples/                # A runnable project per plugin
-├── tests/                   # End-to-end, performance, and version-specific suites
+├── examples/                # A runnable project per plugin, grouped by adapter (openapi, arazzo)
+├── tests/                   # End-to-end, performance, and version-specific suites, grouped by adapter
 ├── schemas/                 # OpenAPI specs used for testing
 ├── configs/                 # Shared build and test configuration
 └── assets/                  # Static assets

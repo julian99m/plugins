@@ -1,0 +1,35 @@
+{
+  "name": "tests-arazzo-1.1.0",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Integration tests for the Arazzo adapter",
+  "license": "MIT",
+  "author": "stijnvanhulle",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kubb-labs/plugins.git",
+    "directory": "tests/arazzo/1.1.0"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc -p ./tsconfig.json --noEmit --emitDeclarationOnly false"
+  },
+  "dependencies": {
+    "@internals/utils": "workspace:*",
+    "@kubb/adapter-arazzo": "catalog:",
+    "@kubb/core": "catalog:",
+    "@kubb/parser-ts": "catalog:",
+    "@kubb/plugin-ts": "workspace:*",
+    "kubb": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=11.0.0"
+  },
+  "packageManager": "pnpm@11.20.0"
+}

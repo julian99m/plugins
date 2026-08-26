@@ -152,7 +152,7 @@ jobs:
         run: pnpm run build
 
       - name: Publish preview packages
-        run: pnpx pkg-pr-new publish --pnpm --owner=stijnvanhulle --repo=https://github.com/kubb-labs/plugins.git './packages/*' --template './examples/*'
+        run: pnpx pkg-pr-new publish --pnpm --owner=stijnvanhulle --repo=https://github.com/kubb-labs/plugins.git './packages/*' --template './examples/*/*'
 
   dependency-diff:
     name: Dependency Diff
@@ -280,7 +280,7 @@ jobs:
         run: pnpm run build
 
       - name: Run E2E tests
-        working-directory: ./tests/e2e
+        working-directory: ./tests/openapi/e2e
         env:
           NODE_OPTIONS: '--max_old_space_size=4096'
           KUBB_DISABLE_TELEMETRY: '1'
