@@ -144,6 +144,33 @@ const configs: Array<{ name: string; config: BuildConfig }> = [
       ],
     },
   },
+  // ─── codecs ────────────────────────────────────────────────────────────
+  // A registered codec must reach a `$ref` request body. petStore's `placeOrder` takes an
+  // `Order` by `$ref`, and `Order.shipDate` is a `datetime`, so the body has to resolve to
+  // `orderInputSchema` (encode) while the response keeps `orderSchema` (decode).
+  {
+    name: 'customCodec',
+    config: {
+      root: __dirname,
+      input: '../../schemas/3.0.x/petStore.yaml',
+      output: { path: './gen', barrel: false },
+      adapter: adapterOas({ validate: false, enums: 'root' }),
+      parsers: [parserTs()],
+      storage: fsStorage(),
+      plugins: [
+        pluginZod({
+          output: { path: './zod', barrel: false, mode: 'directory' },
+          codecs: [
+            {
+              matches: (node) => node.type === 'datetime',
+              decode: () => 'z.iso.datetime().transform((value) => Temporal.Instant.from(value))',
+              encode: () => 'z.instanceof(Temporal.Instant).transform((value) => value.toString())',
+            },
+          ],
+        }),
+      ],
+    },
+  },
   // ─── paramsCasing ──────────────────────────────────────────────────────
   {
     name: 'paramsCasing',

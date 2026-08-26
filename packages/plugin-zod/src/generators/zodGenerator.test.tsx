@@ -8,7 +8,15 @@ import { describe, expect, test } from 'vitest'
 import { matchFiles, rawSources } from '#mocks'
 import { resolverZod } from '../resolvers/resolverZod.ts'
 import type { PluginZod } from '../types.ts'
+import type { Codec } from '../utils.ts'
 import { zodGenerator } from './zodGenerator.tsx'
+
+// A `time` field travels as an ISO string but is a Temporal.PlainTime in application code.
+const temporalCodec: Codec = {
+  matches: (node) => node.type === 'time',
+  decode: () => 'z.iso.time().transform((value) => Temporal.PlainTime.from(value))',
+  encode: () => 'z.instanceof(Temporal.PlainTime).transform((value) => value.toString())',
+}
 
 const testConfig: Config = {
   root: '.',
@@ -28,6 +36,7 @@ const defaultOptions: PluginZod['resolvedOptions'] = {
   guidType: 'uuid',
   regexType: 'literal',
   mini: false,
+  codecs: [],
   output: { path: '.', mode: 'directory' },
   exclude: [],
   include: undefined,
@@ -646,6 +655,54 @@ describe('zodGenerator — Operation', () => {
         ],
       }),
       options: { coercion: true },
+    },
+    // A registered codec drives printing in both directions. The `$ref` half of this needs a
+    // resolvable component registry, so it is covered by the real-spec `customCodec` config in
+    // tests/3.0.x instead of here.
+    {
+      name: 'codec option prints both directions',
+      node: ast.factory.createOperation({
+        operationId: 'bookSlot',
+        method: 'POST',
+        path: '/slots',
+        tags: ['slots'],
+        requestBody: {
+          content: [
+            ast.factory.createContent({
+              contentType: 'application/json',
+              schema: ast.factory.createSchema({
+                type: 'object',
+                primitive: 'object',
+                properties: [
+                  ast.factory.createProperty({
+                    name: 'startsAt',
+                    required: true,
+                    schema: ast.factory.createSchema({ type: 'time', representation: 'string' }),
+                  }),
+                ],
+              }),
+            }),
+          ],
+        },
+        responses: [
+          ast.factory.createResponse({
+            statusCode: '201',
+            schema: ast.factory.createSchema({
+              type: 'object',
+              primitive: 'object',
+              properties: [
+                ast.factory.createProperty({
+                  name: 'startsAt',
+                  required: true,
+                  schema: ast.factory.createSchema({ type: 'time', representation: 'string' }),
+                }),
+              ],
+            }),
+            description: 'Booked',
+          }),
+        ],
+      }),
+      options: { codecs: [temporalCodec] },
     },
   ]
 

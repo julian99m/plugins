@@ -1,6 +1,7 @@
 import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
 import type { PrinterZodNodes } from './printers/printerZod.ts'
 import type { PrinterZodMiniNodes } from './printers/printerZodMini.ts'
+import type { Codec } from './utils.ts'
 
 /**
  * Resolver for Zod that provides naming methods for schema types.
@@ -207,6 +208,18 @@ export type Options = OutputOptions & {
    */
   resolver?: ResolverPatch<ResolverZod>
   /**
+   * Register a conversion for a schema node whose runtime type differs from its wire type, such as
+   * a `time` field carried as an ISO string but modeled as a `Temporal.PlainTime`. Responses print
+   * the `decode` side and request bodies the `encode` side, including through a `$ref`.
+   *
+   * Prefer this over a `printer.nodes` handler for a two-way conversion. A node handler only
+   * changes how a node prints, so the generator never learns the schema carries a conversion and a
+   * `$ref` request body keeps the decode direction.
+   *
+   * Checked before the built-in date codec, so registering one for `date` replaces it.
+   */
+  codecs?: Array<Codec>
+  /**
    * Replace the Zod handler for a specific schema type (`'integer'`, `'date'`, ...).
    * When `mini: true`, overrides target the Zod Mini printer instead.
    */
@@ -231,6 +244,7 @@ export type ResolvedOptions = {
   guidType: NonNullable<Options['guidType']>
   regexType: NonNullable<Options['regexType']>
   mini: NonNullable<Options['mini']>
+  codecs: NonNullable<Options['codecs']>
   printer: Options['printer']
 }
 

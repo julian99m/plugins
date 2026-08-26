@@ -17,6 +17,7 @@ import {
   patternKeySchema,
   shouldCoerce,
 } from '../utils.ts'
+import type { Codec } from '../utils.ts'
 import type { AdapterOas } from '@kubb/adapter-oas'
 
 /**
@@ -99,6 +100,10 @@ export type PrinterZodOptions = {
    * variant for each date-bearing component.
    */
   direction?: 'input' | 'output'
+  /**
+   * Codecs registered on the plugin, checked before the built-in ones.
+   */
+  codecs?: Array<Codec>
   /**
    * Custom handler map for node type overrides.
    */
@@ -202,6 +207,34 @@ function buildZodObjectShape(ctx: ZodPrinterContext, node: ast.SchemaNode): stri
   return buildObject(entries)
 }
 
+type CodecHandlerContext = { options: PrinterZodOptions }
+
+/**
+ * Wraps every node handler so a registered codec prints the node instead, using its `encode` side in
+ * the input direction and `decode` in the output one. Only user codecs are consulted here. The
+ * built-in date codec stays inside the `date` handler, which layers `coercion` on top of it.
+ */
+function applyCodecs<TNodes extends Record<string, unknown>>({ nodes, codecs }: { nodes: TNodes; codecs?: Array<Codec> }): TNodes {
+  if (!codecs?.length) return nodes
+
+  const wrapped = Object.entries(nodes).map(([type, handler]) => {
+    if (typeof handler !== 'function') return [type, handler]
+    const base = handler as (this: CodecHandlerContext, node: ast.SchemaNode) => string | null
+
+    return [
+      type,
+      function (this: CodecHandlerContext, node: ast.SchemaNode): string | null {
+        const codec = codecs.find((entry) => entry.matches(node))
+        if (!codec) return base.call(this, node)
+
+        return this.options.direction === 'input' ? codec.encode(node) : codec.decode(node)
+      },
+    ]
+  })
+
+  return Object.fromEntries(wrapped) as TNodes
+}
+
 /**
  * Zod v4 printer built with `definePrinter`.
  *
@@ -219,200 +252,202 @@ export const printerZod = ast.createPrinter<PrinterZodFactory>((options) => {
   // getter body (to suppress nested `z.lazy()`), so capture a stable reference for the `.strict()`
   // skip decision, which must still see cyclic members inside those getter bodies.
   const cyclicSchemaNames = options.cyclicSchemas
+  const nodes: PrinterZodNodes = {
+    any: () => 'z.any()',
+    unknown: () => 'z.unknown()',
+    void: () => 'z.void()',
+    never: () => 'z.never()',
+    boolean: () => 'z.boolean()',
+    null: () => 'z.null()',
+    string(node) {
+      const base = shouldCoerce(this.options.coercion, 'strings') ? 'z.coerce.string()' : 'z.string()'
+      const pattern = node.pattern ?? integerFormatPattern(node.format)
+
+      return `${base}${lengthConstraints({ ...node, pattern, regexType: this.options.regexType })}`
+    },
+    number(node) {
+      const base = shouldCoerce(this.options.coercion, 'numbers') ? 'z.coerce.number()' : 'z.number()'
+
+      return `${base}${numberConstraints(node)}`
+    },
+    integer(node) {
+      const base = shouldCoerce(this.options.coercion, 'numbers') ? 'z.coerce.number().int()' : 'z.int()'
+
+      return `${base}${numberConstraints(node)}`
+    },
+    bigint() {
+      return shouldCoerce(this.options.coercion, 'numbers') ? 'z.coerce.bigint()' : 'z.bigint()'
+    },
+    date(node) {
+      // representation: 'date' fields are typed as `Date`, so decode/encode at the boundary.
+      const codec = getCodec({ node, codecs: this.options.codecs })
+      if (codec) {
+        if (this.options.direction === 'input') return codec.encode(node)
+        return shouldCoerce(this.options.coercion, 'dates') ? 'z.coerce.date()' : codec.decode(node)
+      }
+
+      return 'z.iso.date()'
+    },
+    datetime(node) {
+      const offset = node.offset || this.options.dateType === 'stringOffset'
+      const local = node.local || this.options.dateType === 'stringLocal'
+
+      if (offset) return 'z.iso.datetime({ offset: true })'
+      if (local) return 'z.iso.datetime({ local: true })'
+
+      return 'z.iso.datetime()'
+    },
+    time(node) {
+      if (node.representation === 'string') {
+        return 'z.iso.time()'
+      }
+
+      return shouldCoerce(this.options.coercion, 'dates') ? 'z.coerce.date()' : 'z.date()'
+    },
+    uuid(node) {
+      const base = this.options.guidType === 'guid' ? 'z.guid()' : 'z.uuid()'
+
+      return `${base}${lengthConstraints({ ...node, regexType: this.options.regexType })}`
+    },
+    email(node) {
+      return `z.email()${lengthConstraints({ ...node, regexType: this.options.regexType })}`
+    },
+    url(node) {
+      return `z.url()${lengthConstraints({ ...node, regexType: this.options.regexType })}`
+    },
+    ipv4: () => 'z.ipv4()',
+    ipv6: () => 'z.ipv6()',
+    blob: () => 'z.instanceof(File)',
+    enum(node) {
+      const values = node.namedEnumValues?.map((v) => v.value) ?? node.enumValues ?? []
+      const nonNullValues = values.filter((v): v is string | number | boolean => v !== null)
+
+      // asConst-style enum: use z.union([z.literal(…), …])
+      if (node.namedEnumValues?.length) {
+        const literals = nonNullValues.map((v) => `z.literal(${formatLiteral(v)})`)
+
+        if (literals.length === 1) return literals[0]!
+        return `z.union([${literals.join(', ')}])`
+      }
+
+      // Regular enum: z.enum for all-string sets, z.literal/z.union otherwise
+      return buildEnum(nonNullValues)
+    },
+    ref(node) {
+      if (!node.name) return null
+      const refName = ast.resolveRefName(node)
+      if (!refName) return null
+
+      // In the input direction, a date-bearing component resolves to its `${name}InputSchema`
+      // variant so request bodies encode `Date → string` instead of decoding.
+      const useInputVariant = node.ref != null && this.options.direction === 'input' && containsCodec({ node, codecs: this.options.codecs })
+      const resolvedName = node.ref
+        ? useInputVariant
+          ? (this.options.resolver?.schema.inputName(refName) ?? refName)
+          : (this.options.resolver?.name(refName) ?? refName)
+        : node.name
+
+      if (node.ref && this.options.cyclicSchemas?.has(refName)) {
+        return `z.lazy(() => ${resolvedName})`
+      }
+
+      return resolvedName
+    },
+    object(node) {
+      const entries = node.properties ?? []
+      const objectBase = `z.object(${buildZodObjectShape(this, node)})`
+
+      const result = (() => {
+        const patterns = node.patternProperties ? Object.entries(node.patternProperties) : []
+
+        if (node.additionalProperties && node.additionalProperties !== true) {
+          const catchallType = this.transform(node.additionalProperties)
+          return catchallType ? `${objectBase}.catchall(${catchallType})` : objectBase
+        }
+        if (node.additionalProperties === true) return `${objectBase}.catchall(${this.transform(ast.factory.createSchema({ type: 'unknown' }))})`
+        // `additionalProperties: false` still permits patternProperties keys, so skip `.strict()` when patterns exist.
+        if (node.additionalProperties === false && patterns.length === 0) return `${objectBase}.strict()`
+
+        // No fixed properties: z.record enforces the key pattern. With fixed properties a record would
+        // reject the declared keys, so fall back to .catchall (value validated, key pattern not).
+        if (patterns.length > 0) {
+          const values = patterns.map(([, valueSchema]) => {
+            const valueType = this.transform(valueSchema) ?? this.transform(ast.factory.createSchema({ type: 'unknown' }))!
+            return valueSchema.nullable ? `${valueType}.nullable()` : valueType
+          })
+          const distinct = [...new Set(values)]
+          const value = distinct.length === 1 ? distinct[0]! : `z.union([${distinct.join(', ')}])`
+
+          if (entries.length > 0) return `${objectBase}.catchall(${value})`
+          return `z.record(${patternKeySchema({ patterns: patterns.map(([pattern]) => pattern), regexType: this.options.regexType })}, ${value})`
+        }
+        return objectBase
+      })()
+
+      return result
+    },
+    array(node) {
+      const items = mapSchemaItems(node, (item) => this.transform(item))
+        .map(({ output }) => output)
+        .filter(Boolean)
+      const inner = items.join(', ') || this.transform(ast.factory.createSchema({ type: 'unknown' }))!
+      const base = `z.array(${inner})${lengthConstraints({ ...node, regexType: this.options.regexType })}`
+
+      return node.unique ? `${base}.refine(items => new Set(items).size === items.length, { message: "Array entries must be unique" })` : base
+    },
+    tuple(node) {
+      const items = mapSchemaItems(node, (item) => this.transform(item))
+        .map(({ output }) => output)
+        .filter(Boolean)
+
+      return `z.tuple(${buildList(items)})`
+    },
+    union(node) {
+      const nodeMembers = node.members ?? []
+      const members = mapSchemaMembers(node, (memberNode) => this.transform(memberNode))
+        .map(({ schema, output }) => (output && node.strategy === 'one' ? strictOneOfMember(output, schema, cyclicSchemaNames) : output))
+        .filter(Boolean)
+      if (members.length === 0) return ''
+      if (members.length === 1) return members[0]!
+      // z.discriminatedUnion needs every option to be a ZodObject. Object variants (refs or
+      // `.extend(…)`-composed `allOf`) qualify; intersections, cyclic `z.lazy(…)` refs, and
+      // non-objects fall back to z.union.
+      const allDiscriminable = nodeMembers.every((m) => isObjectSchemaNode(m, cyclicSchemaNames))
+      if (node.discriminatorPropertyName && allDiscriminable) {
+        return `z.discriminatedUnion(${stringify(node.discriminatorPropertyName)}, ${buildList(members)})`
+      }
+
+      return `z.union(${buildList(members)})`
+    },
+    intersection(node) {
+      const members = node.members ?? []
+      if (members.length === 0) return ''
+
+      const [first, ...rest] = members
+      if (!first) return ''
+
+      const firstBase = this.transform(first)
+      if (!firstBase) return ''
+
+      // An object `allOf` is a merge, not a runtime intersection: `.extend({ … })` keeps it a
+      // ZodObject (usable in z.discriminatedUnion) instead of the non-discriminable `.and(…)`.
+      if (rest.length > 0 && isObjectComposableIntersection(node, cyclicSchemaNames)) {
+        return rest.reduce((acc, member) => `${acc}.extend(${buildZodObjectShape(this, member)})`, firstBase)
+      }
+
+      return rest.reduce((acc, member) => {
+        const constraint = getMemberConstraint({ member, regexType: this.options.regexType })
+        if (constraint) return acc + constraint
+        const transformed = this.transform(member)
+        return transformed ? `${acc}.and(${transformed})` : acc
+      }, firstBase)
+    },
+  }
+
   return {
     name: 'zod',
     options,
-    nodes: {
-      any: () => 'z.any()',
-      unknown: () => 'z.unknown()',
-      void: () => 'z.void()',
-      never: () => 'z.never()',
-      boolean: () => 'z.boolean()',
-      null: () => 'z.null()',
-      string(node) {
-        const base = shouldCoerce(this.options.coercion, 'strings') ? 'z.coerce.string()' : 'z.string()'
-        const pattern = node.pattern ?? integerFormatPattern(node.format)
-
-        return `${base}${lengthConstraints({ ...node, pattern, regexType: this.options.regexType })}`
-      },
-      number(node) {
-        const base = shouldCoerce(this.options.coercion, 'numbers') ? 'z.coerce.number()' : 'z.number()'
-
-        return `${base}${numberConstraints(node)}`
-      },
-      integer(node) {
-        const base = shouldCoerce(this.options.coercion, 'numbers') ? 'z.coerce.number().int()' : 'z.int()'
-
-        return `${base}${numberConstraints(node)}`
-      },
-      bigint() {
-        return shouldCoerce(this.options.coercion, 'numbers') ? 'z.coerce.bigint()' : 'z.bigint()'
-      },
-      date(node) {
-        // representation: 'date' fields are typed as `Date`, so decode/encode at the boundary.
-        const codec = getCodec(node)
-        if (codec) {
-          if (this.options.direction === 'input') return codec.encode(node)
-          return shouldCoerce(this.options.coercion, 'dates') ? 'z.coerce.date()' : codec.decode(node)
-        }
-
-        return 'z.iso.date()'
-      },
-      datetime(node) {
-        const offset = node.offset || this.options.dateType === 'stringOffset'
-        const local = node.local || this.options.dateType === 'stringLocal'
-
-        if (offset) return 'z.iso.datetime({ offset: true })'
-        if (local) return 'z.iso.datetime({ local: true })'
-
-        return 'z.iso.datetime()'
-      },
-      time(node) {
-        if (node.representation === 'string') {
-          return 'z.iso.time()'
-        }
-
-        return shouldCoerce(this.options.coercion, 'dates') ? 'z.coerce.date()' : 'z.date()'
-      },
-      uuid(node) {
-        const base = this.options.guidType === 'guid' ? 'z.guid()' : 'z.uuid()'
-
-        return `${base}${lengthConstraints({ ...node, regexType: this.options.regexType })}`
-      },
-      email(node) {
-        return `z.email()${lengthConstraints({ ...node, regexType: this.options.regexType })}`
-      },
-      url(node) {
-        return `z.url()${lengthConstraints({ ...node, regexType: this.options.regexType })}`
-      },
-      ipv4: () => 'z.ipv4()',
-      ipv6: () => 'z.ipv6()',
-      blob: () => 'z.instanceof(File)',
-      enum(node) {
-        const values = node.namedEnumValues?.map((v) => v.value) ?? node.enumValues ?? []
-        const nonNullValues = values.filter((v): v is string | number | boolean => v !== null)
-
-        // asConst-style enum: use z.union([z.literal(…), …])
-        if (node.namedEnumValues?.length) {
-          const literals = nonNullValues.map((v) => `z.literal(${formatLiteral(v)})`)
-
-          if (literals.length === 1) return literals[0]!
-          return `z.union([${literals.join(', ')}])`
-        }
-
-        // Regular enum: z.enum for all-string sets, z.literal/z.union otherwise
-        return buildEnum(nonNullValues)
-      },
-      ref(node) {
-        if (!node.name) return null
-        const refName = ast.resolveRefName(node)
-        if (!refName) return null
-
-        // In the input direction, a date-bearing component resolves to its `${name}InputSchema`
-        // variant so request bodies encode `Date → string` instead of decoding.
-        const useInputVariant = node.ref != null && this.options.direction === 'input' && containsCodec(node)
-        const resolvedName = node.ref
-          ? useInputVariant
-            ? (this.options.resolver?.schema.inputName(refName) ?? refName)
-            : (this.options.resolver?.name(refName) ?? refName)
-          : node.name
-
-        if (node.ref && this.options.cyclicSchemas?.has(refName)) {
-          return `z.lazy(() => ${resolvedName})`
-        }
-
-        return resolvedName
-      },
-      object(node) {
-        const entries = node.properties ?? []
-        const objectBase = `z.object(${buildZodObjectShape(this, node)})`
-
-        const result = (() => {
-          const patterns = node.patternProperties ? Object.entries(node.patternProperties) : []
-
-          if (node.additionalProperties && node.additionalProperties !== true) {
-            const catchallType = this.transform(node.additionalProperties)
-            return catchallType ? `${objectBase}.catchall(${catchallType})` : objectBase
-          }
-          if (node.additionalProperties === true) return `${objectBase}.catchall(${this.transform(ast.factory.createSchema({ type: 'unknown' }))})`
-          // `additionalProperties: false` still permits patternProperties keys, so skip `.strict()` when patterns exist.
-          if (node.additionalProperties === false && patterns.length === 0) return `${objectBase}.strict()`
-
-          // No fixed properties: z.record enforces the key pattern. With fixed properties a record would
-          // reject the declared keys, so fall back to .catchall (value validated, key pattern not).
-          if (patterns.length > 0) {
-            const values = patterns.map(([, valueSchema]) => {
-              const valueType = this.transform(valueSchema) ?? this.transform(ast.factory.createSchema({ type: 'unknown' }))!
-              return valueSchema.nullable ? `${valueType}.nullable()` : valueType
-            })
-            const distinct = [...new Set(values)]
-            const value = distinct.length === 1 ? distinct[0]! : `z.union([${distinct.join(', ')}])`
-
-            if (entries.length > 0) return `${objectBase}.catchall(${value})`
-            return `z.record(${patternKeySchema({ patterns: patterns.map(([pattern]) => pattern), regexType: this.options.regexType })}, ${value})`
-          }
-          return objectBase
-        })()
-
-        return result
-      },
-      array(node) {
-        const items = mapSchemaItems(node, (item) => this.transform(item))
-          .map(({ output }) => output)
-          .filter(Boolean)
-        const inner = items.join(', ') || this.transform(ast.factory.createSchema({ type: 'unknown' }))!
-        const base = `z.array(${inner})${lengthConstraints({ ...node, regexType: this.options.regexType })}`
-
-        return node.unique ? `${base}.refine(items => new Set(items).size === items.length, { message: "Array entries must be unique" })` : base
-      },
-      tuple(node) {
-        const items = mapSchemaItems(node, (item) => this.transform(item))
-          .map(({ output }) => output)
-          .filter(Boolean)
-
-        return `z.tuple(${buildList(items)})`
-      },
-      union(node) {
-        const nodeMembers = node.members ?? []
-        const members = mapSchemaMembers(node, (memberNode) => this.transform(memberNode))
-          .map(({ schema, output }) => (output && node.strategy === 'one' ? strictOneOfMember(output, schema, cyclicSchemaNames) : output))
-          .filter(Boolean)
-        if (members.length === 0) return ''
-        if (members.length === 1) return members[0]!
-        // z.discriminatedUnion needs every option to be a ZodObject. Object variants (refs or
-        // `.extend(…)`-composed `allOf`) qualify; intersections, cyclic `z.lazy(…)` refs, and
-        // non-objects fall back to z.union.
-        const allDiscriminable = nodeMembers.every((m) => isObjectSchemaNode(m, cyclicSchemaNames))
-        if (node.discriminatorPropertyName && allDiscriminable) {
-          return `z.discriminatedUnion(${stringify(node.discriminatorPropertyName)}, ${buildList(members)})`
-        }
-
-        return `z.union(${buildList(members)})`
-      },
-      intersection(node) {
-        const members = node.members ?? []
-        if (members.length === 0) return ''
-
-        const [first, ...rest] = members
-        if (!first) return ''
-
-        const firstBase = this.transform(first)
-        if (!firstBase) return ''
-
-        // An object `allOf` is a merge, not a runtime intersection: `.extend({ … })` keeps it a
-        // ZodObject (usable in z.discriminatedUnion) instead of the non-discriminable `.and(…)`.
-        if (rest.length > 0 && isObjectComposableIntersection(node, cyclicSchemaNames)) {
-          return rest.reduce((acc, member) => `${acc}.extend(${buildZodObjectShape(this, member)})`, firstBase)
-        }
-
-        return rest.reduce((acc, member) => {
-          const constraint = getMemberConstraint({ member, regexType: this.options.regexType })
-          if (constraint) return acc + constraint
-          const transformed = this.transform(member)
-          return transformed ? `${acc}.and(${transformed})` : acc
-        }, firstBase)
-      },
-    },
+    nodes: applyCodecs({ nodes, codecs: options.codecs }),
     overrides: options.nodes,
     print(node) {
       const { keysToOmit } = this.options

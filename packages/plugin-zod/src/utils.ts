@@ -17,8 +17,22 @@ export function shouldCoerce(coercion: PluginZod['resolvedOptions']['coercion'] 
  * the output (response) schema decodes wire → runtime, and the input (request)
  * variant encodes runtime → wire.
  *
- * To support another codec type, append a `Codec` to `codecs` and route that
- * type's printer node handler through `getCodec`.
+ * Register one through `pluginZod({ codecs })` to give a domain type both directions,
+ * including through a `$ref`. Registering a codec is what tells the generator the
+ * schema carries a conversion, which a `printer.nodes` handler alone cannot do.
+ *
+ * @example A `time` field carried as an ISO string but modeled as a Temporal.PlainTime
+ * ```ts
+ * pluginZod({
+ *   codecs: [
+ *     {
+ *       matches: (node) => node.type === 'time',
+ *       decode: () => 'z.iso.time().transform((value) => Temporal.PlainTime.from(value))',
+ *       encode: () => 'z.instanceof(Temporal.PlainTime).transform((value) => value.toString())',
+ *     },
+ *   ],
+ * })
+ * ```
  */
 export type Codec = {
   /**
@@ -53,24 +67,25 @@ const dateCodec: Codec = {
 }
 
 /**
- * Registered codecs, checked in order.
+ * Codecs shipped with the plugin, checked after any the user registers.
  */
-const codecs: Array<Codec> = [dateCodec]
+const builtInCodecs: Array<Codec> = [dateCodec]
 
 /**
  * Returns the codec for this node, or `undefined` when the node needs no
- * encode/decode (its wire and runtime types match).
+ * encode/decode (its wire and runtime types match). User codecs are checked
+ * first, so registering one for `date` replaces the built-in behavior.
  */
-export function getCodec(node: ast.SchemaNode | undefined): Codec | undefined {
+export function getCodec({ node, codecs = [] }: { node: ast.SchemaNode | undefined; codecs?: Array<Codec> }): Codec | undefined {
   if (!node) return undefined
-  return codecs.find((codec) => codec.matches(node))
+  return [...codecs, ...builtInCodecs].find((codec) => codec.matches(node))
 }
 
 /**
  * Returns `true` when the node itself is encoded/decoded by a codec.
  */
-export function hasCodec(node: ast.SchemaNode | undefined): boolean {
-  return getCodec(node) !== undefined
+export function hasCodec({ node, codecs }: { node: ast.SchemaNode | undefined; codecs?: Array<Codec> }): boolean {
+  return getCodec({ node, codecs }) !== undefined
 }
 
 /**
@@ -79,10 +94,10 @@ export function hasCodec(node: ast.SchemaNode | undefined): boolean {
  * so it must be decoded (response) or encoded (request) at the validation boundary.
  * `$ref`s are followed via their resolved schema; a `seen` set guards cycles.
  */
-export function containsCodec(node: ast.SchemaNode | undefined, seen: Set<string> = new Set()): boolean {
+export function containsCodec({ node, codecs, seen = new Set() }: { node: ast.SchemaNode | undefined; codecs?: Array<Codec>; seen?: Set<string> }): boolean {
   if (!node) return false
 
-  if (hasCodec(node)) return true
+  if (hasCodec({ node, codecs })) return true
 
   if (node.type === 'ref') {
     if (!node.ref) return false
@@ -93,7 +108,7 @@ export function containsCodec(node: ast.SchemaNode | undefined, seen: Set<string
     }
     const resolved = syncSchemaRef(node)
     if (resolved.type === 'ref') return false
-    return containsCodec(resolved, seen)
+    return containsCodec({ node: resolved, codecs, seen })
   }
 
   const children: Array<ast.SchemaNode | undefined> = []
@@ -102,16 +117,16 @@ export function containsCodec(node: ast.SchemaNode | undefined, seen: Set<string
   if ('members' in node && node.members) children.push(...node.members)
   if ('additionalProperties' in node && node.additionalProperties && node.additionalProperties !== true) children.push(node.additionalProperties)
 
-  return children.some((child) => containsCodec(child, seen))
+  return children.some((child) => containsCodec({ node: child, codecs, seen }))
 }
 
 /**
  * Collects the names of `$ref` schemas that transitively contain a codec, so the generator can route
  * them to their input (encode) variant.
  */
-export function collectCodecRefNames(node: ast.SchemaNode): Array<string> {
+export function collectCodecRefNames({ node, codecs }: { node: ast.SchemaNode; codecs?: Array<Codec> }): Array<string> {
   return ast.collectSync<string>(node, {
-    schema: (n) => (n.type === 'ref' && n.ref && containsCodec(n) ? (ast.resolveRefName(n) ?? undefined) : undefined),
+    schema: (n) => (n.type === 'ref' && n.ref && containsCodec({ node: n, codecs }) ? (ast.resolveRefName(n) ?? undefined) : undefined),
   })
 }
 
