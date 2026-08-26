@@ -1,5 +1,5 @@
 import { stringify, toRegExpString } from '@internals/utils'
-import { ast, extractRefName, syncSchemaRef } from 'kubb/kit'
+import { ast, syncSchemaRef } from 'kubb/kit'
 import type { PluginZod } from './types.ts'
 
 /**
@@ -10,104 +10,6 @@ export function shouldCoerce(coercion: PluginZod['resolvedOptions']['coercion'] 
   if (coercion === true) return true
 
   return !!coercion[type]
-}
-
-/**
- * A codec for a schema node whose runtime type differs from its JSON wire type:
- * the output (response) schema decodes wire → runtime, and the input (request)
- * variant encodes runtime → wire. Register one through `pluginZod({ codecs })`.
- */
-export type Codec = {
-  /**
-   * Whether this node is encoded/decoded by this codec.
-   */
-  matches(node: ast.SchemaNode): boolean
-  /**
-   * Output direction (response): decode the wire value into the runtime type.
-   */
-  decode(node: ast.SchemaNode): string
-  /**
-   * Input direction (request): encode the runtime value back to the wire value.
-   */
-  encode(node: ast.SchemaNode): string
-}
-
-/**
- * `dateType: 'date'` fields are typed as `Date` but travel as ISO `string`s.
- * Output decodes `string → Date`; input encodes `Date → string`, preserving the
- * `date` (`YYYY-MM-DD`) vs `date-time` precision carried on `node.format`.
- */
-const dateCodec: Codec = {
-  matches(node) {
-    return node.type === 'date' && node.representation === 'date'
-  },
-  decode(node) {
-    return node.format === 'date' ? 'z.iso.date().transform((value) => new Date(value))' : 'z.iso.datetime().transform((value) => new Date(value))'
-  },
-  encode(node) {
-    return node.format === 'date' ? 'z.date().transform((value) => value.toISOString().slice(0, 10))' : 'z.date().transform((value) => value.toISOString())'
-  },
-}
-
-const builtInCodecs: Array<Codec> = [dateCodec]
-
-/**
- * Returns the codec for this node, or `undefined` when the node needs no
- * encode/decode (its wire and runtime types match). User codecs are checked
- * first, so registering one for `date` replaces the built-in behavior.
- */
-export function getCodec({ node, codecs = [] }: { node: ast.SchemaNode | undefined; codecs?: Array<Codec> }): Codec | undefined {
-  if (!node) return undefined
-  return [...codecs, ...builtInCodecs].find((codec) => codec.matches(node))
-}
-
-/**
- * Returns `true` when the node itself is encoded/decoded by a codec.
- */
-export function hasCodec({ node, codecs }: { node: ast.SchemaNode | undefined; codecs?: Array<Codec> }): boolean {
-  return getCodec({ node, codecs }) !== undefined
-}
-
-/**
- * Returns `true` when the schema transitively contains a codec node —
- * a value whose runtime type differs from its wire type (see {@link hasCodec}),
- * so it must be decoded (response) or encoded (request) at the validation boundary.
- * `$ref`s are followed via their resolved schema; a `seen` set guards cycles.
- */
-export function containsCodec({ node, codecs, seen = new Set() }: { node: ast.SchemaNode | undefined; codecs?: Array<Codec>; seen?: Set<string> }): boolean {
-  if (!node) return false
-
-  if (hasCodec({ node, codecs })) return true
-
-  if (node.type === 'ref') {
-    if (!node.ref) return false
-    const refName = extractRefName(node.ref)
-    if (refName) {
-      if (seen.has(refName)) return false
-      seen.add(refName)
-    }
-    const resolved = syncSchemaRef(node)
-    if (resolved.type === 'ref') return false
-    return containsCodec({ node: resolved, codecs, seen })
-  }
-
-  const children: Array<ast.SchemaNode | undefined> = []
-  if ('properties' in node && node.properties) children.push(...node.properties.map((prop) => prop.schema))
-  if ('items' in node && node.items) children.push(...node.items)
-  if ('members' in node && node.members) children.push(...node.members)
-  if ('additionalProperties' in node && node.additionalProperties && node.additionalProperties !== true) children.push(node.additionalProperties)
-
-  return children.some((child) => containsCodec({ node: child, codecs, seen }))
-}
-
-/**
- * Collects the names of `$ref` schemas that transitively contain a codec, so the generator can route
- * them to their input (encode) variant.
- */
-export function collectCodecRefNames({ node, codecs }: { node: ast.SchemaNode; codecs?: Array<Codec> }): Array<string> {
-  return ast.collectSync<string>(node, {
-    schema: (n) => (n.type === 'ref' && n.ref && containsCodec({ node: n, codecs }) ? (ast.resolveRefName(n) ?? undefined) : undefined),
-  })
 }
 
 /**

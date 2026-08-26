@@ -8,6 +8,7 @@ import { Hookable, createKubb } from '@kubb/core'
 import { type Config, Diagnostics, type KubbHooks, fsStorage } from 'kubb/kit'
 import { parserTs } from '@kubb/parser-ts'
 import { pluginZod } from '@kubb/plugin-zod'
+import type { PrinterZodNodes } from '@kubb/plugin-zod'
 import { describe, expect, test } from 'vitest'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -144,7 +145,7 @@ const configs: Array<{ name: string; config: BuildConfig }> = [
       ],
     },
   },
-  // ─── codecs ────────────────────────────────────────────────────────────
+  // ─── directional printer node ─────────────────────────────────────────
   // `placeOrder` takes an `Order` by `$ref` and `Order.shipDate` is a `datetime`, so the body has
   // to resolve to `orderInputSchema` (encode) while the response keeps `orderSchema` (decode).
   {
@@ -159,13 +160,15 @@ const configs: Array<{ name: string; config: BuildConfig }> = [
       plugins: [
         pluginZod({
           output: { path: './zod', barrel: false, mode: 'directory' },
-          codecs: [
-            {
-              matches: (node) => node.type === 'datetime',
-              decode: () => 'z.iso.datetime().transform((value) => Temporal.Instant.from(value))',
-              encode: () => 'z.instanceof(Temporal.Instant).transform((value) => value.toString())',
-            },
-          ],
+          printer: {
+            nodes: {
+              datetime() {
+                return this.options.direction === 'input'
+                  ? 'z.instanceof(Temporal.Instant).transform((value) => value.toString())'
+                  : 'z.iso.datetime().transform((value) => Temporal.Instant.from(value))'
+              },
+            } satisfies PrinterZodNodes,
+          },
         }),
       ],
     },

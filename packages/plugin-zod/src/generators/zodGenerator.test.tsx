@@ -6,15 +6,17 @@ import { ast, memoryStorage } from 'kubb/kit'
 import { createMockedAdapter, createMockedPlugin, createMockedPluginDriver, renderGeneratorOperation, renderGeneratorSchema } from 'kubb/kit/testing'
 import { describe, expect, test } from 'vitest'
 import { matchFiles, rawSources } from '#mocks'
+import type { PrinterZodNodes } from '../printers/printerZod.ts'
 import { resolverZod } from '../resolvers/resolverZod.ts'
 import type { PluginZod } from '../types.ts'
-import type { Codec } from '../utils.ts'
 import { zodGenerator } from './zodGenerator.tsx'
 
-const temporalCodec: Codec = {
-  matches: (node) => node.type === 'time',
-  decode: () => 'z.iso.time().transform((value) => Temporal.PlainTime.from(value))',
-  encode: () => 'z.instanceof(Temporal.PlainTime).transform((value) => value.toString())',
+const temporalNodes: PrinterZodNodes = {
+  time() {
+    return this.options.direction === 'input'
+      ? 'z.instanceof(Temporal.PlainTime).transform((value) => value.toString())'
+      : 'z.iso.time().transform((value) => Temporal.PlainTime.from(value))'
+  },
 }
 
 const testConfig: Config = {
@@ -35,7 +37,6 @@ const defaultOptions: PluginZod['resolvedOptions'] = {
   guidType: 'uuid',
   regexType: 'literal',
   mini: false,
-  codecs: [],
   output: { path: '.', mode: 'directory' },
   exclude: [],
   include: undefined,
@@ -700,7 +701,7 @@ describe('zodGenerator — Operation', () => {
           }),
         ],
       }),
-      options: { codecs: [temporalCodec] },
+      options: { printer: { nodes: temporalNodes } },
     },
   ]
 

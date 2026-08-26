@@ -1,7 +1,6 @@
 import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
 import type { PrinterZodNodes } from './printers/printerZod.ts'
 import type { PrinterZodMiniNodes } from './printers/printerZodMini.ts'
-import type { Codec } from './utils.ts'
 
 /**
  * Resolver for Zod that provides naming methods for schema types.
@@ -208,19 +207,14 @@ export type Options = OutputOptions & {
    */
   resolver?: ResolverPatch<ResolverZod>
   /**
-   * Register a two-way conversion for a schema node whose runtime type differs from its wire type,
-   * such as a `time` field carried as an ISO string but modeled as a `Temporal.PlainTime`.
-   * Responses print `decode` and request bodies print `encode`, including through a `$ref`.
-   *
-   * Prefer this over a `printer.nodes` handler whenever the two directions differ: a node handler
-   * only changes how a node prints, so no encode variant is emitted.
-   *
-   * Checked before the built-in date codec, so registering one for `date` replaces it.
-   */
-  codecs?: Array<Codec>
-  /**
    * Replace the Zod handler for a specific schema type (`'integer'`, `'date'`, ...).
    * When `mini: true`, overrides target the Zod Mini printer instead.
+   *
+   * A handler that reads `this.options.direction` and returns a different expression per
+   * direction is a two-way conversion, such as a `time` field carried as an ISO string but
+   * modeled as a `Temporal.PlainTime`. The generator detects the difference and emits an
+   * `${name}InputSchema` variant that request bodies resolve to instead, including through a
+   * `$ref`. A handler that ignores `direction` just changes how the node prints, with no variant.
    */
   printer?: {
     nodes?: PrinterZodNodes | PrinterZodMiniNodes
@@ -243,7 +237,6 @@ export type ResolvedOptions = {
   guidType: NonNullable<Options['guidType']>
   regexType: NonNullable<Options['regexType']>
   mini: NonNullable<Options['mini']>
-  codecs: NonNullable<Options['codecs']>
   printer: Options['printer']
 }
 
