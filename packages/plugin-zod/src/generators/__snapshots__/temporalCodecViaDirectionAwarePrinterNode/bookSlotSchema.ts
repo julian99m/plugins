@@ -7,7 +7,7 @@
 import * as z from 'zod'
 
 export const bookSlotStatus201Schema = z.object({
-  startsAt: z.string().transform((value) => Temporal.PlainTime.from(value)),
+  startsAt: z.iso.time().transform((value) => Temporal.PlainTime.from(value)),
 })
 
 export const bookSlotResponseSchema = bookSlotStatus201Schema

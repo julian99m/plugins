@@ -14,12 +14,14 @@ import { zodGenerator } from './zodGenerator.tsx'
 // A custom codec type reaches both directions from one handler: `direction` is `'input'` for
 // request bodies and `'output'` for responses. Annotated as `PrinterZodNodes` because the `nodes`
 // option also accepts the Zod Mini shape, which has no `direction`.
-// `format: 'time'` parses to a `time` node, not a `string` node carrying a format.
+// `format: 'time'` parses to a `time` node, not a `string` node carrying a format. Decoding starts
+// from `z.iso.time()` so a malformed value fails as a validation issue instead of a RangeError
+// thrown inside the transform.
 const temporalNodes: PrinterZodNodes = {
   time() {
     return this.options.direction === 'input'
       ? 'z.instanceof(Temporal.PlainTime).transform((value) => value.toString())'
-      : 'z.string().transform((value) => Temporal.PlainTime.from(value))'
+      : 'z.iso.time().transform((value) => Temporal.PlainTime.from(value))'
   },
 }
 
