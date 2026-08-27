@@ -1,5 +1,5 @@
 ---
-'@kubb/plugin-zod': minor
+'@kubb/plugin-zod': patch
 ---
 
 A `printer.nodes` handler that reads `this.options.direction` now generates an `${name}InputSchema` variant automatically, `$ref` request bodies included.
