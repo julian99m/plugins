@@ -6,7 +6,7 @@
 import * as z from 'zod/mini'
 
 export const categorySchema = z.object({
-  id: z.optional(z.bigint()),
+  id: z.optional(z.coerce.bigint()),
   name: z.optional(z.string()),
   get parent() {
     return z.optional(categorySchema)

@@ -6,7 +6,7 @@
 import * as z from 'zod/mini'
 import { apiResponseSchema } from './apiResponseSchema'
 
-export const uploadFilePathPetIdSchema = z.bigint()
+export const uploadFilePathPetIdSchema = z.coerce.bigint()
 
 export const uploadFileQueryAdditionalMetadataSchema = z.optional(z.string())
 

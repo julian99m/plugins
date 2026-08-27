@@ -6,4 +6,4 @@
 
 import * as z from 'zod'
 
-export const petIdSchema = z.bigint()
+export const petIdSchema = z.coerce.bigint()

@@ -175,7 +175,7 @@ export const printerZodMini = ast.createPrinter<PrinterZodMiniFactory>((options)
         return `z.int()${numberChecksMini(node)}`
       },
       bigint(node) {
-        return `z.bigint()${numberChecksMini(node)}`
+        return `z.coerce.bigint()${numberChecksMini(node)}`
       },
       date(node) {
         if (node.representation === 'string') {

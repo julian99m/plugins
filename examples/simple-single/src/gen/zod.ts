@@ -61,7 +61,7 @@ export const categorySchema = z.object({
 })
 
 export const tagSchema = z.object({
-  id: z.bigint().optional(),
+  id: z.coerce.bigint().optional(),
   name: z.string().optional(),
 })
 
@@ -186,7 +186,7 @@ export const findPetsByTagsResponseSchema = findPetsByTagsStatus200Schema
 
 export const findPetsByTagsErrorSchema = findPetsByTagsStatus400Schema
 
-export const getPetByIdPathPetIdSchema = z.bigint().describe('ID of pet to return')
+export const getPetByIdPathPetIdSchema = z.coerce.bigint().describe('ID of pet to return')
 
 export const getPetByIdStatus200SchemaJson = petSchema
 
@@ -202,7 +202,7 @@ export const getPetByIdResponseSchema = getPetByIdStatus200Schema
 
 export const getPetByIdErrorSchema = z.union([getPetByIdStatus400Schema, getPetByIdStatus404Schema])
 
-export const updatePetWithFormPathPetIdSchema = z.bigint().describe('ID of pet that needs to be updated')
+export const updatePetWithFormPathPetIdSchema = z.coerce.bigint().describe('ID of pet that needs to be updated')
 
 export const updatePetWithFormQueryNameSchema = z.string().optional().describe('Name of pet that needs to be updated')
 
@@ -216,7 +216,7 @@ export const updatePetWithFormErrorSchema = updatePetWithFormStatus405Schema
 
 export const deletePetHeaderApiKeySchema = z.string().optional()
 
-export const deletePetPathPetIdSchema = z.bigint().describe('Pet id to delete')
+export const deletePetPathPetIdSchema = z.coerce.bigint().describe('Pet id to delete')
 
 export const deletePetStatus400Schema = z.unknown()
 
@@ -224,7 +224,7 @@ export const deletePetResponseSchema = z.unknown()
 
 export const deletePetErrorSchema = deletePetStatus400Schema
 
-export const uploadFilePathPetIdSchema = z.bigint().describe('ID of pet to update')
+export const uploadFilePathPetIdSchema = z.coerce.bigint().describe('ID of pet to update')
 
 export const uploadFileQueryAdditionalMetadataSchema = z.string().optional().describe('Additional Metadata')
 
@@ -270,7 +270,7 @@ export const placeOrderPatchBodySchemaFormUrlEncoded = orderSchema.optional()
 
 export const placeOrderPatchBodySchema = z.union([placeOrderPatchBodySchemaJson, placeOrderPatchBodySchemaXml, placeOrderPatchBodySchemaFormUrlEncoded])
 
-export const getOrderByIdPathOrderIdSchema = z.bigint().describe('ID of order that needs to be fetched')
+export const getOrderByIdPathOrderIdSchema = z.coerce.bigint().describe('ID of order that needs to be fetched')
 
 export const getOrderByIdStatus200SchemaJson = orderSchema
 
@@ -286,7 +286,7 @@ export const getOrderByIdResponseSchema = getOrderByIdStatus200Schema
 
 export const getOrderByIdErrorSchema = z.union([getOrderByIdStatus400Schema, getOrderByIdStatus404Schema])
 
-export const deleteOrderPathOrderIdSchema = z.bigint().describe('ID of the order that needs to be deleted')
+export const deleteOrderPathOrderIdSchema = z.coerce.bigint().describe('ID of the order that needs to be deleted')
 
 export const deleteOrderStatus400Schema = z.unknown()
 

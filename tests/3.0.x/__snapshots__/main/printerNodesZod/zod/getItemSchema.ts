@@ -6,7 +6,7 @@
 import * as z from 'zod'
 import { itemSchema } from './itemSchema'
 
-export const getItemPathIdSchema = z.bigint()
+export const getItemPathIdSchema = z.coerce.bigint()
 
 export const getItemStatus200Schema = itemSchema.describe('A simple item')
 
