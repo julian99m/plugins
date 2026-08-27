@@ -6,9 +6,18 @@ import { ast, memoryStorage } from 'kubb/kit'
 import { createMockedAdapter, createMockedPlugin, createMockedPluginDriver, renderGeneratorOperation, renderGeneratorSchema } from 'kubb/kit/testing'
 import { describe, expect, test } from 'vitest'
 import { matchFiles, rawSources } from '#mocks'
+import type { PrinterZodNodes } from '../printers/printerZod.ts'
 import { resolverZod } from '../resolvers/resolverZod.ts'
 import type { PluginZod } from '../types.ts'
 import { zodGenerator } from './zodGenerator.tsx'
+
+const temporalNodes: PrinterZodNodes = {
+  time() {
+    return this.options.direction === 'encode'
+      ? 'z.instanceof(Temporal.PlainTime).transform((value) => value.toString())'
+      : 'z.iso.time().transform((value) => Temporal.PlainTime.from(value))'
+  },
+}
 
 const testConfig: Config = {
   root: '.',
@@ -646,6 +655,53 @@ describe('zodGenerator — Operation', () => {
         ],
       }),
       options: { coercion: true },
+    },
+    // The `$ref` half needs a resolvable component registry, so the real-spec config in
+    // tests/3.0.x covers that instead.
+    {
+      name: 'direction-branching printer node prints both directions',
+      node: ast.factory.createOperation({
+        operationId: 'bookSlot',
+        method: 'POST',
+        path: '/slots',
+        tags: ['slots'],
+        requestBody: {
+          content: [
+            ast.factory.createContent({
+              contentType: 'application/json',
+              schema: ast.factory.createSchema({
+                type: 'object',
+                primitive: 'object',
+                properties: [
+                  ast.factory.createProperty({
+                    name: 'startsAt',
+                    required: true,
+                    schema: ast.factory.createSchema({ type: 'time', representation: 'string' }),
+                  }),
+                ],
+              }),
+            }),
+          ],
+        },
+        responses: [
+          ast.factory.createResponse({
+            statusCode: '201',
+            schema: ast.factory.createSchema({
+              type: 'object',
+              primitive: 'object',
+              properties: [
+                ast.factory.createProperty({
+                  name: 'startsAt',
+                  required: true,
+                  schema: ast.factory.createSchema({ type: 'time', representation: 'string' }),
+                }),
+              ],
+            }),
+            description: 'Booked',
+          }),
+        ],
+      }),
+      options: { printer: { nodes: temporalNodes } },
     },
   ]
 

@@ -12,12 +12,13 @@ import { ast, defineGenerator } from 'kubb/kit'
 import { File, jsxRenderer } from 'kubb/jsx'
 import { Zod } from '../components/Zod.tsx'
 import { ZOD_NAMESPACE_IMPORTS } from '../constants.ts'
-import { printerZod } from '../printers/printerZod.ts'
+import { collectDirectionalRefNames, containsDirectionalNode, printerZod } from '../printers/printerZod.ts'
+import type { PrinterZodOptions } from '../printers/printerZod.ts'
 import { printerZodMini } from '../printers/printerZodMini.ts'
 import type { PluginZod, ResolverZod } from '../types'
-import { buildGroupedParamsSchema, collectCodecRefNames, containsCodec } from '../utils.ts'
+import { buildGroupedParamsSchema } from '../utils.ts'
 
-type StdPrinters = { output: ReturnType<typeof printerZod>; input: ReturnType<typeof printerZod> }
+type StdPrinters = { decode: ReturnType<typeof printerZod>; encode: ReturnType<typeof printerZod> }
 type ZodPrinterEntry = StdPrinters & { coercion: unknown; guidType: unknown; regexType: unknown; dateType: unknown; nodes: unknown }
 type ZodMiniPrinterEntry = { printer: ReturnType<typeof printerZodMini>; guidType: unknown; regexType: unknown; nodes: unknown }
 
@@ -41,9 +42,8 @@ type BuildResponseUnionParams = {
 }
 
 /**
- * Returns the cached `output`/`input` direction printers for a resolver, building them on
- * first use. The `input` printer encodes `Date → string` for request bodies, and `output` decodes
- * `string → Date` for responses. Schemas without `dateType: 'date'` fields print identically.
+ * Cached printer per direction for a resolver, built on first use. Schemas holding nothing that
+ * converts print the same either way.
  */
 function getStdPrinters(resolver: ResolverZod, params: StdPrinterParams): StdPrinters {
   const cached = zodPrinterCache.get(resolver)
@@ -55,20 +55,20 @@ function getStdPrinters(resolver: ResolverZod, params: StdPrinterParams): StdPri
     cached.dateType === params.dateType &&
     cached.nodes === params.nodes
   ) {
-    return { output: cached.output, input: cached.input }
+    return { decode: cached.decode, encode: cached.encode }
   }
-  const output = printerZod({ ...params, resolver, direction: 'output' } as Parameters<typeof printerZod>[0])
-  const input = printerZod({ ...params, resolver, direction: 'input' } as Parameters<typeof printerZod>[0])
+  const decode = printerZod({ ...params, resolver, direction: 'decode' } as Parameters<typeof printerZod>[0])
+  const encode = printerZod({ ...params, resolver, direction: 'encode' } as Parameters<typeof printerZod>[0])
   zodPrinterCache.set(resolver, {
-    output,
-    input,
+    decode,
+    encode,
     coercion: params.coercion,
     guidType: params.guidType,
     regexType: params.regexType,
     dateType: params.dateType,
     nodes: params.nodes,
   })
-  return { output, input }
+  return { decode, encode }
 }
 
 function getMiniPrinter(
@@ -107,15 +107,15 @@ export const zodGenerator = defineGenerator<PluginZod>({
 
     const isZodImport = ZOD_NAMESPACE_IMPORTS.has(importPath as 'zod' | 'zod/mini')
     const cyclicSchemas = new Set<string>(ctx.meta.circularNames)
+    const printerOptions: PrinterZodOptions = { coercion, guidType, regexType, dateType, resolver, cyclicSchemas, nodes: printer?.nodes }
 
-    // A codec component is rendered twice: the canonical (output) schema decodes
-    // `string → Date`, and an `${name}InputSchema` variant encodes `Date → string` for requests.
-    const hasCodec = !mini && containsCodec(node)
+    // Rendered twice: the canonical schema decodes, the `${name}InputSchema` variant encodes.
+    const hasDirectionalNode = !mini && containsDirectionalNode({ node, printerOptions })
 
-    const codecRefNames = new Set(hasCodec ? collectCodecRefNames(node) : [])
+    const directionalRefNames = new Set(hasDirectionalNode ? collectDirectionalRefNames({ node, printerOptions }) : [])
     const importEntries = resolver.imports({ node, root, output, group: group ?? undefined })
-    const inputImportEntries = hasCodec
-      ? [...codecRefNames].map((schemaName) => ({
+    const inputImportEntries = hasDirectionalNode
+      ? [...directionalRefNames].map((schemaName) => ({
           name: [resolver.schema.inputName(schemaName)],
           path: resolver.file({ name: schemaName, extname: '.ts', root, output, group: group ?? undefined }).path,
         }))
@@ -136,7 +136,7 @@ export const zodGenerator = defineGenerator<PluginZod>({
     const inferTypeName = inferred ? resolver.schema.typeName(node.name) : null
 
     const stdPrinters = mini ? null : getStdPrinters(resolver, { coercion, guidType, regexType, dateType, cyclicSchemas, nodes: printer?.nodes })
-    const schemaPrinter = mini ? getMiniPrinter(resolver, { guidType, regexType, cyclicSchemas, nodes: printer?.nodes }) : stdPrinters!.output
+    const schemaPrinter = mini ? getMiniPrinter(resolver, { guidType, regexType, cyclicSchemas, nodes: printer?.nodes }) : stdPrinters!.decode
 
     return (
       <File
@@ -152,11 +152,11 @@ export const zodGenerator = defineGenerator<PluginZod>({
         ))}
 
         <Zod name={meta.name} node={node} printer={schemaPrinter} inferTypeName={inferTypeName} cyclic={cyclicSchemas.has(node.name)} />
-        {hasCodec && stdPrinters && (
+        {hasDirectionalNode && stdPrinters && (
           <Zod
             name={resolver.schema.inputName(node.name)}
             node={node}
-            printer={stdPrinters.input}
+            printer={stdPrinters.encode}
             inferTypeName={inferred ? resolver.schema.inputTypeName(node.name) : null}
             cyclic={cyclicSchemas.has(node.name)}
           />
@@ -177,30 +177,30 @@ export const zodGenerator = defineGenerator<PluginZod>({
     } as const
 
     const cyclicSchemas = new Set<string>(ctx.meta.circularNames)
+    const printerOptions: PrinterZodOptions = { coercion, guidType, regexType, dateType, resolver, cyclicSchemas, nodes: printer?.nodes }
 
     function renderSchemaEntry({
       schema,
       name,
       keysToOmit,
-      direction = 'output',
+      direction = 'decode',
     }: {
       schema: ast.SchemaNode | null
       name: string
       keysToOmit?: Array<string> | null
-      direction?: 'input' | 'output'
+      direction?: 'encode' | 'decode'
     }) {
       if (!schema) return null
 
       const inferTypeName = inferred ? resolver.schema.type(name) : null
 
-      // In the input direction, refs to codec components resolve to their input variant.
-      const codecRefNames = direction === 'input' && !mini ? new Set(collectCodecRefNames(schema)) : null
+      const directionalRefNames = direction === 'encode' && !mini ? new Set(collectDirectionalRefNames({ node: schema, printerOptions })) : null
       const imports = resolver.imports({
         node: schema,
         root,
         output,
         group: group ?? undefined,
-        name: (schemaName) => (codecRefNames?.has(schemaName) ? resolver.schema.inputName(schemaName) : resolver.name(schemaName)),
+        name: (schemaName) => (directionalRefNames?.has(schemaName) ? resolver.schema.inputName(schemaName) : resolver.name(schemaName)),
       })
 
       const schemaPrinter = mini
@@ -240,7 +240,7 @@ export const zodGenerator = defineGenerator<PluginZod>({
       entries: Array<{ contentType: string; schema?: ast.SchemaNode | null; keysToOmit?: Array<string> | null }>,
       baseName: string,
       decorate?: (schema: ast.SchemaNode) => ast.SchemaNode,
-      direction?: 'input' | 'output',
+      direction?: 'encode' | 'decode',
     ) {
       const variants = resolveContentTypeVariants(entries, baseName)
       const unionSchema = ast.factory.createSchema({
@@ -293,7 +293,9 @@ export const zodGenerator = defineGenerator<PluginZod>({
       })
     }
 
-    const paramSchemas = node.parameters.map((param) => renderSchemaEntry({ schema: param.schema, name: resolver.param.name(node, param), direction: 'input' }))
+    const paramSchemas = node.parameters.map((param) =>
+      renderSchemaEntry({ schema: param.schema, name: resolver.param.name(node, param), direction: 'encode' }),
+    )
 
     const responseSchemas = node.responses.map((res) => {
       const variants = (res.content ?? []).filter((entry) => entry.schema)
@@ -334,7 +336,7 @@ export const zodGenerator = defineGenerator<PluginZod>({
           schema: { ...entry.schema, description: node.requestBody!.description ?? entry.schema.description },
           name: resolver.response.body(node),
           keysToOmit: entry.keysToOmit,
-          direction: 'input',
+          direction: 'encode',
         })
       }
       return buildContentTypeVariants(
@@ -344,7 +346,7 @@ export const zodGenerator = defineGenerator<PluginZod>({
           ...schema,
           description: node.requestBody!.description ?? schema.description,
         }),
-        'input',
+        'encode',
       )
     })()
 
@@ -367,13 +369,13 @@ export const zodGenerator = defineGenerator<PluginZod>({
             renderSchemaEntry({
               schema: buildGroupedParamsSchema({ params }),
               name: resolver.param[kind](node, params[0]!),
-              direction: 'input',
+              direction: 'encode',
             }),
           )
       : []
 
     const optionsSchema = inferred
-      ? renderSchemaEntry({ schema: buildOptionsSchema(node, resolver), name: resolver.name(`${node.operationId} Options`), direction: 'input' })
+      ? renderSchemaEntry({ schema: buildOptionsSchema(node, resolver), name: resolver.name(`${node.operationId} Options`), direction: 'encode' })
       : null
 
     // The per-status record a client's `RequestResult` is keyed on. Response bodies, so `output`.

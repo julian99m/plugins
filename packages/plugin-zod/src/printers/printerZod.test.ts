@@ -128,14 +128,14 @@ describe('printerZod', () => {
     })
 
     test('date (JS Date) — input encodes Date → ISO string', () => {
-      const p = printerZod({ direction: 'input' })
+      const p = printerZod({ direction: 'encode' })
       expect(p.print(ast.factory.createSchema({ type: 'date', representation: 'date', format: 'date-time' }))).toBe(
         'z.date().transform((value) => value.toISOString())',
       )
     })
 
     test('date (JS Date), format date — input encodes Date → YYYY-MM-DD string', () => {
-      const p = printerZod({ direction: 'input' })
+      const p = printerZod({ direction: 'encode' })
       expect(p.print(ast.factory.createSchema({ type: 'date', representation: 'date', format: 'date' }))).toBe(
         'z.date().transform((value) => value.toISOString().slice(0, 10))',
       )
