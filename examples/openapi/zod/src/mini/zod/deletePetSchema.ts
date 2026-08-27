@@ -7,7 +7,7 @@ import * as z from 'zod/mini'
 
 export const deletePetHeaderApiKeySchema = z.optional(z.string())
 
-export const deletePetPathPetIdSchema = z.bigint()
+export const deletePetPathPetIdSchema = z.coerce.bigint()
 
 export const deletePetStatus400Schema = z.unknown()
 

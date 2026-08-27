@@ -175,6 +175,9 @@ export type Options = OutputOptions & {
    * validate with `z.coerce.date()` instead of the string-to-Date codec. Fields
    * kept as ISO strings (`z.iso.date()`, `z.iso.datetime()`) are never coerced.
    *
+   * `bigint` fields (`format: int64`) always coerce, regardless of this option:
+   * `JSON.parse` hands back a `number`, which a plain `z.bigint()` rejects.
+   *
    * @default false
    * @see https://zod.dev/?id=coercion-for-primitives
    */
@@ -211,6 +214,11 @@ export type Options = OutputOptions & {
   /**
    * Replace the Zod handler for a specific schema type (`'integer'`, `'date'`, ...).
    * When `mini: true`, overrides target the Zod Mini printer instead.
+   *
+   * A handler that returns a different expression per `this.options.direction` declares a two-way
+   * conversion, such as a `time` field carried as an ISO string but modeled as a
+   * `Temporal.PlainTime`. The generator then emits an `${name}InputSchema` variant for request
+   * bodies to resolve to, `$ref` included. Ignore `direction` and only the printed output changes.
    */
   printer?: {
     nodes?: PrinterZodNodes | PrinterZodMiniNodes

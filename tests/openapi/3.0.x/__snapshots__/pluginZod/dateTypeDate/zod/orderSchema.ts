@@ -7,8 +7,8 @@ import * as z from 'zod'
 import { orderStatusEnumSchema } from './orderStatusEnumSchema'
 
 export const orderSchema = z.object({
-  id: z.bigint().optional().meta({ examples: [10] }),
-  petId: z.bigint().optional().meta({ examples: [198772] }),
+  id: z.coerce.bigint().optional().meta({ examples: [10] }),
+  petId: z.coerce.bigint().optional().meta({ examples: [198772] }),
   quantity: z.int().optional().meta({ examples: [7] }),
   shipDate: z.iso.datetime().transform((value) => new Date(value)).optional(),
   status: orderStatusEnumSchema.optional().describe('Order Status').meta({ examples: ['approved'] }),
@@ -16,8 +16,8 @@ export const orderSchema = z.object({
 })
 
 export const orderInputSchema = z.object({
-  id: z.bigint().optional().meta({ examples: [10] }),
-  petId: z.bigint().optional().meta({ examples: [198772] }),
+  id: z.coerce.bigint().optional().meta({ examples: [10] }),
+  petId: z.coerce.bigint().optional().meta({ examples: [198772] }),
   quantity: z.int().optional().meta({ examples: [7] }),
   shipDate: z.date().transform((value) => value.toISOString()).optional(),
   status: orderStatusEnumSchema.optional().describe('Order Status').meta({ examples: ['approved'] }),

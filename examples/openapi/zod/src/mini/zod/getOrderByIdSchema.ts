@@ -6,7 +6,7 @@
 import * as z from 'zod/mini'
 import { orderSchema } from './orderSchema'
 
-export const getOrderByIdPathOrderIdSchema = z.bigint()
+export const getOrderByIdPathOrderIdSchema = z.coerce.bigint()
 
 export const getOrderByIdStatus200SchemaJson = orderSchema
 

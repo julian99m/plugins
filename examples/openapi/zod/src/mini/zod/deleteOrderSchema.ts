@@ -5,7 +5,7 @@
 
 import * as z from 'zod/mini'
 
-export const deleteOrderPathOrderIdSchema = z.bigint()
+export const deleteOrderPathOrderIdSchema = z.coerce.bigint()
 
 export const deleteOrderStatus400Schema = z.unknown()
 

@@ -6,7 +6,7 @@
 import * as z from 'zod'
 import { apiResponseSchema } from '../apiResponseSchema'
 
-export const uploadFilePathPetIdSchema = z.bigint().describe('ID of pet to update')
+export const uploadFilePathPetIdSchema = z.coerce.bigint().describe('ID of pet to update')
 
 export const uploadFileQueryAdditionalMetadataSchema = z.string().optional().describe('Additional Metadata')
 

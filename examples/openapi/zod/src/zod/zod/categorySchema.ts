@@ -6,7 +6,7 @@
 import { z } from '../../zod.ts'
 
 export const categorySchema = z.object({
-  id: z
+  id: z.coerce
     .bigint()
     .optional()
     .meta({ examples: [1] }),
