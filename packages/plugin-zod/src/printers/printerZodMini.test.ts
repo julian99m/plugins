@@ -90,8 +90,8 @@ describe('printerZodMini', () => {
   })
 
   describe('bigint', () => {
-    test('basic bigint (no coercion in mini)', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'bigint' }))).toBe('z.bigint()')
+    test('basic bigint coerces, since JSON.parse yields a number', () => {
+      expect(printer.print(ast.factory.createSchema({ type: 'bigint' }))).toBe('z.coerce.bigint()')
     })
   })
 

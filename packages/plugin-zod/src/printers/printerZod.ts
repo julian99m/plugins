@@ -312,7 +312,7 @@ const scalarNodes: PrinterZodNodes = {
     return `${base}${numberConstraints(node)}`
   },
   bigint() {
-    return shouldCoerce(this.options.coercion, 'numbers') ? 'z.coerce.bigint()' : 'z.bigint()'
+    return 'z.coerce.bigint()'
   },
   date(node) {
     if (node.representation !== 'date') return 'z.iso.date()'

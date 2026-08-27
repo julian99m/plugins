@@ -106,13 +106,8 @@ describe('printerZod', () => {
   })
 
   describe('bigint', () => {
-    test('basic bigint', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'bigint' }))).toBe('z.bigint()')
-    })
-
-    test('bigint with coercion', () => {
-      const p = printerZod({ coercion: { numbers: true } })
-      expect(p.print(ast.factory.createSchema({ type: 'bigint' }))).toBe('z.coerce.bigint()')
+    test('basic bigint coerces, since JSON.parse yields a number', () => {
+      expect(printer.print(ast.factory.createSchema({ type: 'bigint' }))).toBe('z.coerce.bigint()')
     })
   })
 
