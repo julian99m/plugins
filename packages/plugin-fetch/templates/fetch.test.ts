@@ -204,6 +204,19 @@ describe('defaultBodySerializer', () => {
     expect(body).toBe('tags=a,b&filter%5Bx%5D=1')
   })
 
+  test('emits a bigint as a JSON number', () => {
+    expect(defaultBodySerializer({ body: { id: 42n } })).toBe('{"id":42}')
+  })
+
+  test('emits a bigint nested in a multipart part', () => {
+    const body = defaultBodySerializer({ body: { meta: { id: 42n } }, contentType: 'multipart/form-data' }) as FormData
+    expect(body.get('meta')).toBe('{"id":42}')
+  })
+
+  test('throws on a bigint too large to survive JSON', () => {
+    expect(() => defaultBodySerializer({ body: { id: 9007199254740993n } })).toThrow(/without losing precision/)
+  })
+
   test('applies a per-part content type from multipart encoding via a typed Blob', async () => {
     const body = defaultBodySerializer({
       body: { meta: { a: 1 } },
