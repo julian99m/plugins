@@ -13,7 +13,7 @@ import { zodGenerator } from './zodGenerator.tsx'
 
 const temporalNodes: PrinterZodNodes = {
   time() {
-    return this.options.direction === 'input'
+    return this.options.direction === 'encode'
       ? 'z.instanceof(Temporal.PlainTime).transform((value) => value.toString())'
       : 'z.iso.time().transform((value) => Temporal.PlainTime.from(value))'
   },
@@ -656,10 +656,10 @@ describe('zodGenerator — Operation', () => {
       }),
       options: { coercion: true },
     },
-    // The `$ref` half needs a resolvable component registry, so the real-spec `customCodec`
-    // config in tests/3.0.x covers that instead.
+    // The `$ref` half needs a resolvable component registry, so the real-spec config in
+    // tests/3.0.x covers that instead.
     {
-      name: 'codec option prints both directions',
+      name: 'direction-branching printer node prints both directions',
       node: ast.factory.createOperation({
         operationId: 'bookSlot',
         method: 'POST',

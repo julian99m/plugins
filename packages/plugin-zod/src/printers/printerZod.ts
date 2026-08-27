@@ -89,14 +89,18 @@ export type PrinterZodOptions = {
    */
   cyclicSchemas?: ReadonlySet<string>
   /**
-   * Print direction for `dateType: 'date'` fields (`Date` in TypeScript):
-   * - `'output'` (default): decode the wire `string` into a `Date` (response bodies).
-   * - `'input'`: encode a `Date` back into the wire `string` (request bodies/params).
+   * Which way a node converts between its wire type and its runtime type:
+   * - `'decode'` (default): wire into runtime, used by response schemas.
+   * - `'encode'`: runtime back to wire, used by request bodies and parameters.
    *
-   * Diverging the directions requires the generator to emit an `${name}InputSchema`
-   * variant for each date-bearing component.
+   * Named for the conversion rather than the slot, since Zod's own `z.input` and `z.output`
+   * describe a different axis and read inverted here: the `'decode'` schema is the one whose
+   * `z.input` is the wire type.
+   *
+   * A handler returning different output per direction makes the generator emit an
+   * `${name}InputSchema` variant for that component.
    */
-  direction?: 'input' | 'output'
+  direction?: 'encode' | 'decode'
   /**
    * Custom handler map for node type overrides.
    */
@@ -219,12 +223,12 @@ function variesByDirection({ node, printerOptions }: { node: ast.SchemaNode; pri
   const handler = printerOptions.nodes?.[node.type] ?? scalarNodes[node.type]
   if (!handler) return false
 
-  const call = (direction: 'input' | 'output') => {
+  const call = (direction: 'encode' | 'decode') => {
     const context: DirectionProbeContext = { options: { ...printerOptions, direction }, transform: () => null, base: () => null }
     return (handler as (this: DirectionProbeContext, node: ast.SchemaNode) => string | null).call(context, node)
   }
 
-  return call('output') !== call('input')
+  return call('decode') !== call('encode')
 }
 
 /**
@@ -313,7 +317,7 @@ const scalarNodes: PrinterZodNodes = {
   date(node) {
     if (node.representation !== 'date') return 'z.iso.date()'
 
-    if (this.options.direction === 'input') {
+    if (this.options.direction === 'encode') {
       return node.format === 'date' ? 'z.date().transform((value) => value.toISOString().slice(0, 10))' : 'z.date().transform((value) => value.toISOString())'
     }
 
@@ -393,7 +397,7 @@ export const printerZod = ast.createPrinter<PrinterZodFactory>((options) => {
 
       // In the input direction, a component whose fields print differently by direction resolves
       // to its `${name}InputSchema` variant so request bodies encode instead of decoding.
-      const useInputVariant = node.ref != null && this.options.direction === 'input' && containsDirectionalNode({ node, printerOptions: this.options })
+      const useInputVariant = node.ref != null && this.options.direction === 'encode' && containsDirectionalNode({ node, printerOptions: this.options })
       const resolvedName = node.ref
         ? useInputVariant
           ? (this.options.resolver?.schema.inputName(refName) ?? refName)

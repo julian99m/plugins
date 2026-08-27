@@ -11,7 +11,7 @@ pluginZod({
   printer: {
     nodes: {
       time() {
-        return this.options.direction === 'input'
+        return this.options.direction === 'encode'
           ? 'z.instanceof(Temporal.PlainTime).transform((value) => value.toString())'
           : 'z.iso.time().transform((value) => Temporal.PlainTime.from(value))'
       },
@@ -21,3 +21,5 @@ pluginZod({
 ```
 
 The built-in `date` conversion (`dateType: 'date'`) is now an ordinary handler on that same map, so overriding `printer.nodes.date` replaces it like any other override.
+
+`direction` also changes values, from `'input' | 'output'` to `'encode' | 'decode'`. The old pair collided with Zod's own `z.input` and `z.output`, and read inverted against them: the schema built at `direction: 'output'` is the one whose `z.input` is the wire type. The new values name the conversion instead, matching `z.codec(a, b, { decode, encode })`. Replace `'input'` with `'encode'` and `'output'` with `'decode'` in any `printer.nodes` handler that reads it.

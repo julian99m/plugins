@@ -149,7 +149,7 @@ const configs: Array<{ name: string; config: BuildConfig }> = [
   // `placeOrder` takes an `Order` by `$ref` and `Order.shipDate` is a `datetime`, so the body has
   // to resolve to `orderInputSchema` (encode) while the response keeps `orderSchema` (decode).
   {
-    name: 'customCodec',
+    name: 'directionalPrinterNode',
     config: {
       root: __dirname,
       input: '../../schemas/3.0.x/petStore.yaml',
@@ -163,7 +163,7 @@ const configs: Array<{ name: string; config: BuildConfig }> = [
           printer: {
             nodes: {
               datetime() {
-                return this.options.direction === 'input'
+                return this.options.direction === 'encode'
                   ? 'z.instanceof(Temporal.Instant).transform((value) => value.toString())'
                   : 'z.iso.datetime().transform((value) => Temporal.Instant.from(value))'
               },
