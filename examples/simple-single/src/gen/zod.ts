@@ -25,11 +25,11 @@ export const findPetsByStatusStatusSchema = z
   .describe('Status values that need to be considered for filter')
 
 export const orderSchema = z.object({
-  id: z
+  id: z.coerce
     .bigint()
     .optional()
     .meta({ examples: [10] }),
-  petId: z
+  petId: z.coerce
     .bigint()
     .optional()
     .meta({ examples: [198772] }),
@@ -50,7 +50,7 @@ export const orderSchema = z.object({
 })
 
 export const categorySchema = z.object({
-  id: z
+  id: z.coerce
     .bigint()
     .optional()
     .meta({ examples: [1] }),
@@ -70,7 +70,7 @@ export const personSchema = z.object({
 })
 
 export const petSchema = z.object({
-  id: z
+  id: z.coerce
     .bigint()
     .optional()
     .meta({ examples: [10] }),
@@ -82,7 +82,7 @@ export const petSchema = z.object({
 })
 
 export const addPetRequestSchema = z.object({
-  id: z
+  id: z.coerce
     .bigint()
     .optional()
     .meta({ examples: [10] }),
