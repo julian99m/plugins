@@ -6,11 +6,11 @@
 import { z } from '../../zod.ts'
 
 export const orderSchema = z.object({
-  id: z
+  id: z.coerce
     .bigint()
     .optional()
     .meta({ examples: [10] }),
-  petId: z
+  petId: z.coerce
     .bigint()
     .optional()
     .meta({ examples: [198772] }),

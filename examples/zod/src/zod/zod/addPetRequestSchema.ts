@@ -8,7 +8,7 @@ import { categorySchema } from './categorySchema'
 import { tagSchema } from './tagSchema'
 
 export const addPetRequestSchema = z.object({
-  id: z
+  id: z.coerce
     .bigint()
     .optional()
     .meta({ examples: [10] }),
