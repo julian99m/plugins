@@ -1,5 +1,15 @@
 # @kubb/plugin-axios
 
+## 5.1.1
+
+### Patch Changes
+
+- [#800](https://github.com/kubb-labs/plugins/pull/800) [`fc33804`](https://github.com/kubb-labs/plugins/commit/fc338044a0865bdb26fc2449d8b09d6abe82a399) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - A request body containing a `format: int64` field threw `TypeError: Do not know how to serialize a BigInt` before the call left the client, because `defaultBodySerializer` passed the body to a bare `JSON.stringify`. Bigints now serialize as JSON numbers.
+  
+  A value past `Number.MAX_SAFE_INTEGER` still throws, now with a message naming the cause, rather than going out silently truncated. Register a `serializer.body` or a per-content-type codec to send those.
+- Updated dependencies [[`bb127d6`](https://github.com/kubb-labs/plugins/commit/bb127d69e996aa9117062129ccae1910706514ad), [`4f97e63`](https://github.com/kubb-labs/plugins/commit/4f97e632b6d3bcb215b95d1c62a1ee9349d762f6)]:
+  - @kubb/plugin-zod@5.1.1
+
 ## 5.1.0
 
 ### Minor Changes
