@@ -152,7 +152,7 @@ const configs: Array<{ name: string; config: BuildConfig }> = [
     name: 'directionalPrinterNode',
     config: {
       root: __dirname,
-      input: '../../schemas/3.0.x/petStore.yaml',
+      input: '../../../schemas/3.0.x/petStore.yaml',
       output: { path: './gen', barrel: false },
       adapter: adapterOas({ validate: false, enums: 'root' }),
       parsers: [parserTs()],
