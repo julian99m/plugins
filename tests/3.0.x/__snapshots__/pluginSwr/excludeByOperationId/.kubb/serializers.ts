@@ -127,21 +127,14 @@ export function isDefaultJsonBody(body: unknown): boolean {
 }
 
 /**
- * `JSON.stringify` replacer that emits a `bigint` (`format: int64`) as a JSON number, which it
- * refuses to do on its own.
- *
- * A value past `Number.MAX_SAFE_INTEGER` cannot survive the conversion, so it throws rather than
- * going out silently truncated. Send those through a `serializer.body` or a per-content-type codec.
+ * Emits a `bigint` (`format: int64`) as a JSON number, which `JSON.stringify` refuses to do itself.
+ * Past the safe-integer range it throws, so an id never goes out silently truncated.
  */
 function jsonReplacer(_key: string, value: unknown): unknown {
   if (typeof value !== 'bigint') return value
-
-  const asNumber = Number(value)
-  if (!Number.isSafeInteger(asNumber)) {
+  if (value > Number.MAX_SAFE_INTEGER || value < Number.MIN_SAFE_INTEGER)
     throw new TypeError(`Cannot serialize ${value}n as JSON without losing precision, register a serializer.body to send it another way.`)
-  }
-
-  return asNumber
+  return Number(value)
 }
 
 function appendFormDataValue({ formData, key, value, contentType }: { formData: FormData; key: string; value: unknown; contentType?: string }): void {

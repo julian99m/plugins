@@ -213,8 +213,9 @@ describe('defaultBodySerializer', () => {
     expect(body.get('meta')).toBe('{"id":42}')
   })
 
-  test('throws on a bigint too large to survive JSON', () => {
+  test('throws on a bigint outside the safe-integer range', () => {
     expect(() => defaultBodySerializer({ body: { id: 9007199254740993n } })).toThrow(/without losing precision/)
+    expect(() => defaultBodySerializer({ body: { id: -9007199254740993n } })).toThrow(/without losing precision/)
   })
 
   test('applies a per-part content type from multipart encoding via a typed Blob', async () => {
