@@ -210,11 +210,10 @@ export type Options = OutputOptions & {
    * Replace the Zod handler for a specific schema type (`'integer'`, `'date'`, ...).
    * When `mini: true`, overrides target the Zod Mini printer instead.
    *
-   * A handler that reads `this.options.direction` and returns a different expression per
-   * direction is a two-way conversion, such as a `time` field carried as an ISO string but
-   * modeled as a `Temporal.PlainTime`. The generator detects the difference and emits an
-   * `${name}InputSchema` variant that request bodies resolve to instead, including through a
-   * `$ref`. A handler that ignores `direction` just changes how the node prints, with no variant.
+   * A handler that returns a different expression per `this.options.direction` declares a two-way
+   * conversion, such as a `time` field carried as an ISO string but modeled as a
+   * `Temporal.PlainTime`. The generator then emits an `${name}InputSchema` variant for request
+   * bodies to resolve to, `$ref` included. Ignore `direction` and only the printed output changes.
    */
   printer?: {
     nodes?: PrinterZodNodes | PrinterZodMiniNodes

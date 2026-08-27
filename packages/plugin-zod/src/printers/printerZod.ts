@@ -201,20 +201,17 @@ function buildZodObjectShape(ctx: ZodPrinterContext, node: ast.SchemaNode): stri
 }
 
 /**
- * Node types that never depend on nested children and so are safe to invoke directly, outside a
- * full recursive print, to probe whether a handler's output changes with `direction`. Container
- * types (`object`, `array`, `union`, ...) delegate to their children instead of reading `direction`
- * themselves, so probing them directly would just re-print the whole subtree for no reason —
- * {@link containsDirectionalNode} walks into their children instead.
+ * Types the direction probe skips. They delegate to their children rather than reading
+ * `direction` themselves, so {@link containsDirectionalNode} walks into the children instead.
  */
 const CONTAINER_TYPES = new Set<ast.SchemaType>(['object', 'array', 'tuple', 'union', 'intersection', 'ref'])
 
 type DirectionProbeContext = { options: PrinterZodOptions; transform: () => null; base: () => null }
 
 /**
- * Runs `scalarNodes[node.type]`, or the user's override for it, once per direction and reports
- * whether the two calls disagree — the signal that a component needs an `${name}InputSchema`
- * variant. Scalar handlers never recurse, so calling them outside a full print is safe.
+ * Runs the node's effective handler (a `printer.nodes` override, else the built-in) once per
+ * direction and reports whether the two disagree. That difference is what makes a component
+ * need an `${name}InputSchema` variant.
  */
 function variesByDirection({ node, printerOptions }: { node: ast.SchemaNode; printerOptions: PrinterZodOptions }): boolean {
   if (CONTAINER_TYPES.has(node.type)) return false
@@ -231,9 +228,9 @@ function variesByDirection({ node, printerOptions }: { node: ast.SchemaNode; pri
 }
 
 /**
- * Whether the schema transitively contains a node whose printed output differs by direction (see
- * {@link variesByDirection}), so it must be decoded (response) or encoded (request) at the
- * validation boundary. `$ref`s are followed via their resolved schema; a `seen` set guards cycles.
+ * Whether the schema transitively contains a node that prints differently per direction, so it
+ * must decode on responses and encode on requests. Follows `$ref`s through their resolved
+ * schema, with `seen` guarding cycles.
  */
 export function containsDirectionalNode({
   node,
@@ -270,8 +267,7 @@ export function containsDirectionalNode({
 }
 
 /**
- * Collects the names of `$ref` schemas that transitively contain a directional node, so the
- * generator can route them to their input (encode) variant.
+ * Names of the `$ref` schemas the generator should route to their input (encode) variant.
  */
 export function collectDirectionalRefNames({ node, printerOptions }: { node: ast.SchemaNode; printerOptions: PrinterZodOptions }): Array<string> {
   return ast.collectSync<string>(node, {
@@ -280,15 +276,13 @@ export function collectDirectionalRefNames({ node, printerOptions }: { node: ast
 }
 
 /**
- * Handlers for node types whose output never depends on nested children. Hoisted to module scope
- * (rather than built fresh per printer instance) so {@link variesByDirection} can invoke one
- * directly to probe both directions, without needing a full printer instance.
+ * Handlers that never recurse into children, so {@link variesByDirection} can call one directly
+ * to probe both directions without building a printer.
  *
- * `date` reads `direction` to decode `string → Date` on responses and encode `Date → string` back
- * on requests, preserving the `date` (`YYYY-MM-DD`) vs `date-time` precision on `node.format`. It
- * only applies to `representation: 'date'` fields (`dateType: 'date'`); fields kept as ISO strings
- * print the same `z.iso.date()` either way. A `printer.nodes.date` override replaces this handler
- * entirely, including its direction branch.
+ * `date` is the built-in two-way conversion, decoding `string → Date` on responses and encoding
+ * back on requests, keeping `date` and `date-time` precision apart. Only `representation: 'date'`
+ * fields convert; ISO-string fields print `z.iso.date()` either way. A `printer.nodes.date`
+ * override replaces the whole handler, direction branch included.
  */
 const scalarNodes: PrinterZodNodes = {
   any: () => 'z.any()',

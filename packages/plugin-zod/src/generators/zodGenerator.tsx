@@ -109,8 +109,7 @@ export const zodGenerator = defineGenerator<PluginZod>({
     const cyclicSchemas = new Set<string>(ctx.meta.circularNames)
     const printerOptions: PrinterZodOptions = { coercion, guidType, regexType, dateType, resolver, cyclicSchemas, nodes: printer?.nodes }
 
-    // A component whose fields print differently by direction is rendered twice: the canonical
-    // (output) schema decodes, and an `${name}InputSchema` variant encodes for requests.
+    // Rendered twice: the canonical schema decodes, the `${name}InputSchema` variant encodes.
     const hasDirectionalNode = !mini && containsDirectionalNode({ node, printerOptions })
 
     const directionalRefNames = new Set(hasDirectionalNode ? collectDirectionalRefNames({ node, printerOptions }) : [])
@@ -195,8 +194,6 @@ export const zodGenerator = defineGenerator<PluginZod>({
 
       const inferTypeName = inferred ? resolver.schema.type(name) : null
 
-      // In the input direction, refs to components whose fields print differently by direction
-      // resolve to their input variant.
       const directionalRefNames = direction === 'input' && !mini ? new Set(collectDirectionalRefNames({ node: schema, printerOptions })) : null
       const imports = resolver.imports({
         node: schema,

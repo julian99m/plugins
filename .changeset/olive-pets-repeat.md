@@ -2,9 +2,9 @@
 '@kubb/plugin-zod': minor
 ---
 
-`printer.nodes` handlers that read `this.options.direction` now generate an `${name}InputSchema` variant automatically, including when the body is a `$ref`.
+A `printer.nodes` handler that reads `this.options.direction` now generates an `${name}InputSchema` variant automatically, `$ref` request bodies included.
 
-Before this, a direction-branching `printer.nodes` handler only changed how a node printed. The generator never learned the schema carried a conversion, so no input variant was emitted and a `$ref` request body kept the decode direction. The generator now detects the difference itself by running the handler for both directions, so no separate registration step is needed.
+Such a handler used to only change how a node printed. The generator never learned the schema carried a conversion, so no input variant was emitted and a `$ref` request body kept the decode direction. It now runs the handler for both directions and compares, so nothing extra needs registering.
 
 ```ts
 pluginZod({
@@ -20,4 +20,4 @@ pluginZod({
 })
 ```
 
-The built-in `date` conversion (`dateType: 'date'`) is now just an ordinary `printer.nodes.date` handler under the hood, so a `printer.nodes.date` override replaces it the same way any other override does.
+The built-in `date` conversion (`dateType: 'date'`) is now an ordinary handler on that same map, so overriding `printer.nodes.date` replaces it like any other override.
