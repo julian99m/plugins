@@ -128,13 +128,169 @@ export function isDefaultJsonBody(body: unknown): boolean {
 
 /**
  * Emits a `bigint` (`format: int64`) as a JSON number, which `JSON.stringify` refuses to do itself.
- * Past the safe-integer range it throws, so an id never goes out silently truncated.
+ * Past the safe-integer range it throws, so an id never goes out silently truncated. `parseJson`
+ * is the response-side counterpart, reading a `bigint` back out of the response body.
  */
 function jsonReplacer(_key: string, value: unknown): unknown {
   if (typeof value !== 'bigint') return value
   if (value > Number.MAX_SAFE_INTEGER || value < Number.MIN_SAFE_INTEGER)
     throw new TypeError(`Cannot serialize ${value}n as JSON without losing precision, register a serializer.body to send it another way.`)
   return Number(value)
+}
+
+type JsonScanner = { text: string; index: number }
+
+// Below this many digits an integer literal is always within Number.MAX_SAFE_INTEGER, so `hasUnsafeInteger`
+// can rule out the slow path without walking the whole string for the common case.
+const unsafeIntegerPattern = /\d{16,}/
+
+function isJsonDigit(char: string | undefined): boolean {
+  return char !== undefined && char >= '0' && char <= '9'
+}
+
+function isJsonWhitespace(char: string | undefined): boolean {
+  return char === ' ' || char === '\t' || char === '\n' || char === '\r'
+}
+
+function skipJsonWhitespace(scanner: JsonScanner): void {
+  while (isJsonWhitespace(scanner.text[scanner.index])) scanner.index++
+}
+
+const jsonEscapes: Record<string, string> = { '"': '"', '\\': '\\', '/': '/', b: '\b', f: '\f', n: '\n', r: '\r', t: '\t' }
+
+function parseJsonString(scanner: JsonScanner): string {
+  scanner.index++ // opening quote
+  let result = ''
+  while (true) {
+    const char = scanner.text[scanner.index]
+    if (char === undefined) throw new SyntaxError('Unterminated string in JSON')
+    scanner.index++
+    if (char === '"') return result
+    if (char !== '\\') {
+      result += char
+      continue
+    }
+    const escape = scanner.text[scanner.index]
+    scanner.index++
+    if (escape === 'u') {
+      result += String.fromCharCode(Number.parseInt(scanner.text.slice(scanner.index, scanner.index + 4), 16))
+      scanner.index += 4
+      continue
+    }
+    const replacement = escape !== undefined ? jsonEscapes[escape] : undefined
+    if (replacement === undefined) throw new SyntaxError(`Invalid escape sequence in JSON at position ${scanner.index}`)
+    result += replacement
+  }
+}
+
+function parseJsonNumber(scanner: JsonScanner): number | bigint {
+  const start = scanner.index
+  if (scanner.text[scanner.index] === '-') scanner.index++
+  while (isJsonDigit(scanner.text[scanner.index])) scanner.index++
+  let isInteger = true
+  if (scanner.text[scanner.index] === '.') {
+    isInteger = false
+    scanner.index++
+    while (isJsonDigit(scanner.text[scanner.index])) scanner.index++
+  }
+  if (scanner.text[scanner.index] === 'e' || scanner.text[scanner.index] === 'E') {
+    isInteger = false
+    scanner.index++
+    if (scanner.text[scanner.index] === '+' || scanner.text[scanner.index] === '-') scanner.index++
+    while (isJsonDigit(scanner.text[scanner.index])) scanner.index++
+  }
+  const literal = scanner.text.slice(start, scanner.index)
+  return isInteger && !Number.isSafeInteger(Number(literal)) ? BigInt(literal) : Number(literal)
+}
+
+function parseJsonArray(scanner: JsonScanner): Array<unknown> {
+  scanner.index++ // '['
+  const result: Array<unknown> = []
+  skipJsonWhitespace(scanner)
+  if (scanner.text[scanner.index] === ']') {
+    scanner.index++
+    return result
+  }
+  while (true) {
+    skipJsonWhitespace(scanner)
+    result.push(parseJsonValue(scanner))
+    skipJsonWhitespace(scanner)
+    const next = scanner.text[scanner.index]
+    scanner.index++
+    if (next === ']') return result
+    if (next !== ',') throw new SyntaxError(`Expected ',' or ']' in JSON at position ${scanner.index}`)
+  }
+}
+
+function parseJsonObject(scanner: JsonScanner): Record<string, unknown> {
+  scanner.index++ // '{'
+  const result: Record<string, unknown> = {}
+  skipJsonWhitespace(scanner)
+  if (scanner.text[scanner.index] === '}') {
+    scanner.index++
+    return result
+  }
+  while (true) {
+    skipJsonWhitespace(scanner)
+    if (scanner.text[scanner.index] !== '"') throw new SyntaxError(`Expected a string key in JSON at position ${scanner.index}`)
+    const key = parseJsonString(scanner)
+    skipJsonWhitespace(scanner)
+    if (scanner.text[scanner.index] !== ':') throw new SyntaxError(`Expected ':' in JSON at position ${scanner.index}`)
+    scanner.index++
+    skipJsonWhitespace(scanner)
+    result[key] = parseJsonValue(scanner)
+    skipJsonWhitespace(scanner)
+    const next = scanner.text[scanner.index]
+    scanner.index++
+    if (next === '}') return result
+    if (next !== ',') throw new SyntaxError(`Expected ',' or '}' in JSON at position ${scanner.index}`)
+  }
+}
+
+function parseJsonValue(scanner: JsonScanner): unknown {
+  const char = scanner.text[scanner.index]
+  if (char === '{') return parseJsonObject(scanner)
+  if (char === '[') return parseJsonArray(scanner)
+  if (char === '"') return parseJsonString(scanner)
+  if (char === '-' || isJsonDigit(char)) return parseJsonNumber(scanner)
+  if (scanner.text.startsWith('true', scanner.index)) {
+    scanner.index += 4
+    return true
+  }
+  if (scanner.text.startsWith('false', scanner.index)) {
+    scanner.index += 5
+    return false
+  }
+  if (scanner.text.startsWith('null', scanner.index)) {
+    scanner.index += 4
+    return null
+  }
+  throw new SyntaxError(`Unexpected token in JSON at position ${scanner.index}`)
+}
+
+/**
+ * `JSON.parse`, except an integer literal outside the safe-integer range parses as a `bigint`
+ * instead of the `number` the built-in parser would round it to. `format: int64` fields validate
+ * against a `bigint` (see `jsonReplacer`'s request-side counterpart), and `JSON.parse` itself never
+ * hands back a `bigint`, so without this the value has already lost precision before validation runs.
+ *
+ * Scans the raw text once to check for a run of digits long enough to be unsafe; when none exists
+ * it defers to the native `JSON.parse` instead of paying for a hand-written parser on every call.
+ *
+ * @example
+ * ```ts
+ * parseJson('{"id":9007199254740993}') // { id: 9007199254740993n }
+ * parseJson('{"id":42}') // { id: 42 }
+ * ```
+ */
+export function parseJson(text: string): unknown {
+  if (!unsafeIntegerPattern.test(text)) return JSON.parse(text)
+  const scanner: JsonScanner = { text, index: 0 }
+  skipJsonWhitespace(scanner)
+  const value = parseJsonValue(scanner)
+  skipJsonWhitespace(scanner)
+  if (scanner.index < text.length) throw new SyntaxError(`Unexpected trailing content in JSON at position ${scanner.index}`)
+  return value
 }
 
 function appendFormDataValue({ formData, key, value, contentType }: { formData: FormData; key: string; value: unknown; contentType?: string }): void {

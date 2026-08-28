@@ -1,4 +1,12 @@
-import { applyHeaderStyles, defaultBodySerializer, defaultPathSerializer, defaultQuerySerializer, isDefaultJsonBody, serializeCookies } from './serializers'
+import {
+  applyHeaderStyles,
+  defaultBodySerializer,
+  defaultPathSerializer,
+  defaultQuerySerializer,
+  isDefaultJsonBody,
+  parseJson,
+  serializeCookies,
+} from './serializers'
 import type { HeadersInit, PathParamStyle, PathSerializer, Serializers, Styles } from './serializers'
 import { type StandardSchemaValidator, validateStandardSchema } from './standardSchema'
 
@@ -670,14 +678,14 @@ async function parseResponse(response: Response, responseType?: ResponseType): P
     case 'json': {
       // An empty body with a JSON content-type would make response.json() throw, so treat it as no data.
       const body = await response.text()
-      return body ? JSON.parse(body) : undefined
+      return body ? parseJson(body) : undefined
     }
   }
 
   const text = await response.text()
   if (!text) return undefined
   try {
-    return JSON.parse(text)
+    return parseJson(text)
   } catch {
     return text
   }
@@ -761,7 +769,7 @@ function parseEvent<TData>(raw: string): ServerSentEvent<TData> | undefined {
   if (data.length) {
     const joined = data.join('\n')
     try {
-      event.data = JSON.parse(joined) as TData
+      event.data = parseJson(joined) as TData
     } catch {
       event.data = joined as TData
     }

@@ -1,6 +1,14 @@
 import axios from 'axios'
 import type { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
-import { applyHeaderStyles, defaultBodySerializer, defaultPathSerializer, defaultQuerySerializer, isDefaultJsonBody, serializeCookies } from './serializers'
+import {
+  applyHeaderStyles,
+  defaultBodySerializer,
+  defaultPathSerializer,
+  defaultQuerySerializer,
+  isDefaultJsonBody,
+  parseJson,
+  serializeCookies,
+} from './serializers'
 import type { HeadersInit, PathParamStyle, PathSerializer, Serializers, Styles } from './serializers'
 import { type StandardSchemaValidator, validateStandardSchema } from './standardSchema'
 
@@ -424,6 +432,22 @@ function resolveSerializers({ config, requestConfig }: { config: { serializer?: 
 }
 
 /**
+ * Axios's own default `transformResponse`, with `JSON.parse` swapped for `parseJson` so `format:
+ * int64` fields survive the response the same way plugin-fetch's `parseResponse` already does. A
+ * regular function, not an arrow, so `this` resolves to the merged axios config the way axios calls it.
+ */
+function transformResponse(this: AxiosRequestConfig, data: unknown): unknown {
+  const jsonRequested = this.responseType === 'json'
+  if (typeof data !== 'string' || !data || (this.responseType !== undefined && !jsonRequested)) return data
+  try {
+    return parseJson(data)
+  } catch (error) {
+    if (jsonRequested) throw error
+    return data
+  }
+}
+
+/**
  * Resolves everything a call needs before it touches axios: merged headers with the negotiated
  * content type, auth on headers or query, serialized cookies, the validated and serialized body,
  * and the final axios request config with `throwOnError` riding `validateStatus`.
@@ -498,6 +522,7 @@ async function resolveRequest<TBody, TRequest, TResponse>({
     paramsSerializer: (params) => querySerializer(params as Record<string, unknown>, requestConfig.styles?.query),
     data: body,
     transformRequest: (data) => data,
+    transformResponse,
     signal: requestConfig.signal,
     responseType: requestConfig.responseType,
     validateStatus,
@@ -668,7 +693,7 @@ function parseEvent<TData>(raw: string): ServerSentEvent<TData> | undefined {
   if (data.length) {
     const joined = data.join('\n')
     try {
-      event.data = JSON.parse(joined) as TData
+      event.data = parseJson(joined) as TData
     } catch {
       event.data = joined as TData
     }
