@@ -11,7 +11,7 @@ import {
   type Transport,
   type TransportResult,
 } from './fetch.ts'
-import { applyHeaderStyles, defaultBodySerializer, defaultPathSerializer, defaultQuerySerializer, serializeCookies } from './serializers.ts'
+import { applyHeaderStyles, defaultBodySerializer, defaultPathSerializer, defaultQuerySerializer, parseJson, serializeCookies } from './serializers.ts'
 
 type FakeResult = Partial<Pick<TransportResult, 'data' | 'status' | 'statusText'>>
 
@@ -228,6 +228,54 @@ describe('defaultBodySerializer', () => {
     expect(part).toBeInstanceOf(Blob)
     expect((part as Blob).type).toBe('application/json')
     expect(await (part as Blob).text()).toBe('{"a":1}')
+  })
+})
+
+describe('parseJson', () => {
+  test('parses ordinary values the same as JSON.parse', () => {
+    expect(parseJson('{"name":"odie","tags":["a","b"],"active":true,"note":null,"age":4}')).toStrictEqual({
+      name: 'odie',
+      tags: ['a', 'b'],
+      active: true,
+      note: null,
+      age: 4,
+    })
+  })
+
+  test('parses an integer past Number.MAX_SAFE_INTEGER as a bigint', () => {
+    expect(parseJson('{"id":9007199254740993}')).toStrictEqual({ id: 9007199254740993n })
+  })
+
+  test('parses a negative integer past Number.MIN_SAFE_INTEGER as a bigint', () => {
+    expect(parseJson('{"id":-9007199254740993}')).toStrictEqual({ id: -9007199254740993n })
+  })
+
+  test('keeps a safe integer as a number even with 16+ digits total in the payload', () => {
+    expect(parseJson('{"id":1000000000000000,"other":1000000000000000}')).toStrictEqual({ id: 1000000000000000, other: 1000000000000000 })
+  })
+
+  test('leaves a float or exponent notation past the safe range as a number, since it already lost precision', () => {
+    expect(parseJson('{"id":9007199254740993.5}')).toStrictEqual({ id: Number('9007199254740993.5') })
+    expect(parseJson('{"id":9.007199254740993e15}')).toStrictEqual({ id: Number('9.007199254740993e15') })
+  })
+
+  test('does not mistake a long digit run inside a string for an integer literal', () => {
+    expect(parseJson('{"note":"order 12345678901234567890 shipped"}')).toStrictEqual({ note: 'order 12345678901234567890 shipped' })
+  })
+
+  test('finds an unsafe integer nested in arrays and objects', () => {
+    expect(parseJson('{"pets":[{"id":9007199254740993},{"id":1}]}')).toStrictEqual({ pets: [{ id: 9007199254740993n }, { id: 1 }] })
+  })
+
+  test('unescapes strings the same as JSON.parse', () => {
+    expect(parseJson(String.raw`{"id":9007199254740993,"note":"line1\nline2\t\"quoted\"é"}`)).toStrictEqual({
+      id: 9007199254740993n,
+      note: 'line1\nline2\t"quoted"é',
+    })
+  })
+
+  test('throws SyntaxError on malformed JSON, same as JSON.parse', () => {
+    expect(() => parseJson('{"id":9007199254740993')).toThrow(SyntaxError)
   })
 })
 
@@ -770,6 +818,11 @@ describe('parseEventStream', () => {
   test('parses JSON data events split on a blank line', async () => {
     const events = await collect(parseEventStream(streamOf(['data: {"n":1}\n\n', 'data: {"n":2}\n\n'])))
     expect(events).toStrictEqual([{ data: { n: 1 } }, { data: { n: 2 } }])
+  })
+
+  test('parses an int64 id in event data as a bigint', async () => {
+    const events = await collect(parseEventStream(streamOf(['data: {"id":9007199254740993}\n\n'])))
+    expect(events).toStrictEqual([{ data: { id: 9007199254740993n } }])
   })
 
   test('concatenates multi-line data with a newline', async () => {

@@ -1,7 +1,7 @@
 import type { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { describe, expect, test, vi } from 'vitest'
 import { type CallResult, createClientCore, parseEventStream, ResponseError, resolveAuth } from './axios.ts'
-import { applyHeaderStyles, defaultBodySerializer, defaultPathSerializer, defaultQuerySerializer, serializeCookies } from './serializers.ts'
+import { applyHeaderStyles, defaultBodySerializer, defaultPathSerializer, defaultQuerySerializer, parseJson, serializeCookies } from './serializers.ts'
 
 type Programmed = { data?: unknown; status?: number; statusText?: string }
 
@@ -211,6 +211,30 @@ describe('defaultBodySerializer', () => {
   })
 })
 
+describe('parseJson', () => {
+  test('parses ordinary values the same as JSON.parse', () => {
+    expect(parseJson('{"name":"odie","tags":["a","b"],"active":true,"note":null,"age":4}')).toStrictEqual({
+      name: 'odie',
+      tags: ['a', 'b'],
+      active: true,
+      note: null,
+      age: 4,
+    })
+  })
+
+  test('parses an integer past Number.MAX_SAFE_INTEGER as a bigint', () => {
+    expect(parseJson('{"id":9007199254740993}')).toStrictEqual({ id: 9007199254740993n })
+  })
+
+  test('does not mistake a long digit run inside a string for an integer literal', () => {
+    expect(parseJson('{"note":"order 12345678901234567890 shipped"}')).toStrictEqual({ note: 'order 12345678901234567890 shipped' })
+  })
+
+  test('throws SyntaxError on malformed JSON, same as JSON.parse', () => {
+    expect(() => parseJson('{"id":9007199254740993')).toThrow(SyntaxError)
+  })
+})
+
 describe('serializeCookies', () => {
   test('serializes primitives and arrays in form style', () => {
     expect(serializeCookies({ session: 'abc', ids: [1, 2] })).toBe('session=abc; ids=1,2')
@@ -262,6 +286,15 @@ describe('createClientCore', () => {
     expect(calls[0]?.url).toBe('/pet/7')
     expect(calls[0]?.params).toStrictEqual({ sort: 'name' })
     expect(calls[0]?.method).toBe('GET')
+  })
+
+  test('sets a bigint-safe transformResponse, mirroring parseJson for a JSON-requested response', async () => {
+    const { instance, calls } = fakeAxios()
+    const client = createClientCore({ transport: instance })
+    await client({ method: 'GET', url: '/pet/1' })
+    const transform = calls[0]?.transformResponse as (this: AxiosRequestConfig, data: unknown) => unknown
+    expect(transform.call({ responseType: 'json' }, '{"id":9007199254740993}')).toStrictEqual({ id: 9007199254740993n })
+    expect(transform.call({ responseType: 'text' }, '{"id":9007199254740993}')).toBe('{"id":9007199254740993}')
   })
 
   test('serializes array and object path params instead of [object Object]', async () => {
@@ -825,6 +858,11 @@ describe('parseEventStream', () => {
   test('parses JSON data events split on a blank line', async () => {
     const events = await collect(parseEventStream(streamOf(['data: {"n":1}\n\n', 'data: {"n":2}\n\n'])))
     expect(events).toStrictEqual([{ data: { n: 1 } }, { data: { n: 2 } }])
+  })
+
+  test('parses an int64 id in event data as a bigint', async () => {
+    const events = await collect(parseEventStream(streamOf(['data: {"id":9007199254740993}\n\n'])))
+    expect(events).toStrictEqual([{ data: { id: 9007199254740993n } }])
   })
 
   test('concatenates multi-line data and reads event/id/retry fields', async () => {
